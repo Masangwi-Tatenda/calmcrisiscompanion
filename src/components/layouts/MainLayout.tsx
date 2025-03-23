@@ -12,7 +12,11 @@ const MainLayout = () => {
   useEffect(() => {
     // For demo purposes - check if user is coming from auth pages
     const isAuthenticated = localStorage.getItem("isAuthenticated") === "true";
-    if (!isAuthenticated && !location.pathname.includes('/signin') && !location.pathname.includes('/signup')) {
+    if (!isAuthenticated && 
+        !location.pathname.includes('/signin') && 
+        !location.pathname.includes('/signup') && 
+        !location.pathname.includes('/onboarding') && 
+        !location.pathname.includes('/')) {
       navigate("/signin");
     }
   }, [navigate, location]);
