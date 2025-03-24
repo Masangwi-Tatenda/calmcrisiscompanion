@@ -30,6 +30,20 @@ const Home = () => {
           severity: "medium",
           time: "1 hour ago",
         },
+        {
+          id: 3,
+          title: "Traffic Alert",
+          message: "Major accident on Highway 101. Expect delays of 30+ minutes.",
+          severity: "medium",
+          time: "2 hours ago",
+        },
+        {
+          id: 4,
+          title: "Power Outage",
+          message: "Scheduled maintenance outage in your area from 10pm-2am tonight.",
+          severity: "low",
+          time: "3 hours ago",
+        },
       ]);
       setIsLoading(false);
     }, 1000);
@@ -54,7 +68,7 @@ const Home = () => {
   ];
 
   return (
-    <div className="page-container">
+    <div className="page-container pb-24">
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-bold">Hello, {userName}</h1>
@@ -111,7 +125,7 @@ const Home = () => {
         </div>
       </div>
 
-      <div>
+      <div className="mb-8">
         <div className="flex justify-between items-center mb-4">
           <h2 className="font-semibold">Recent Alerts</h2>
           <button 

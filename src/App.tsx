@@ -20,6 +20,7 @@ import Contacts from "./pages/Contacts";
 import Profile from "./pages/Profile";
 import Chat from "./pages/Chat";
 import NotFound from "./pages/NotFound";
+import EnhancedProfile from "./pages/EnhancedProfile";
 
 const queryClient = new QueryClient();
 
@@ -42,7 +43,7 @@ const App = () => (
             <Route path="alerts" element={<Alerts />} />
             <Route path="resources" element={<Resources />} />
             <Route path="contacts" element={<Contacts />} />
-            <Route path="profile" element={<Profile />} />
+            <Route path="profile" element={<EnhancedProfile />} />
             <Route path="chat" element={<Chat />} />
           </Route>
           

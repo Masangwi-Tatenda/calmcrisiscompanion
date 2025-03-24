@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ShieldAlert, Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
+import authService from "@/services/authService";
 
 const SignUp = () => {
   const [name, setName] = useState("");
@@ -15,7 +16,7 @@ const SignUp = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!name || !email || !password) {
@@ -38,20 +39,35 @@ const SignUp = () => {
     
     setIsLoading(true);
     
-    // Simulate API request
-    setTimeout(() => {
-      setIsLoading(false);
-      localStorage.setItem("isAuthenticated", "true");
+    try {
+      const response = await authService.signUp({ name, email, password });
+      
+      if (response.success) {
+        toast({
+          title: "Account created",
+          description: "Your account has been created successfully",
+        });
+        navigate("/fill-profile");
+      } else {
+        toast({
+          title: "Sign Up Failed",
+          description: response.message || "Failed to create account",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
       toast({
-        title: "Account created",
-        description: "Your account has been created successfully",
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
       });
-      navigate("/fill-profile");
-    }, 1000);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <div className="h-full flex flex-col bg-background">
+    <div className="h-full flex flex-col bg-background overflow-auto">
       <div className="p-4 border-b border-border">
         <Button 
           variant="ghost" 

@@ -3,6 +3,7 @@ import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import BottomNavigation from "../navigation/BottomNavigation";
 import SOSButton from "../common/SOSButton";
 import { useEffect } from "react";
+import { ScrollProvider } from "@/contexts/ScrollContext";
 
 const MainLayout = () => {
   const location = useLocation();
@@ -22,13 +23,15 @@ const MainLayout = () => {
   }, [navigate, location]);
 
   return (
-    <div className="flex flex-col h-full bg-background">
-      <main className="flex-1 overflow-hidden relative">
-        <Outlet />
-      </main>
-      <SOSButton />
-      <BottomNavigation />
-    </div>
+    <ScrollProvider>
+      <div className="flex flex-col min-h-screen bg-background">
+        <main className="flex-1 overflow-auto pb-20">
+          <Outlet />
+        </main>
+        <SOSButton />
+        <BottomNavigation />
+      </div>
+    </ScrollProvider>
   );
 };
 

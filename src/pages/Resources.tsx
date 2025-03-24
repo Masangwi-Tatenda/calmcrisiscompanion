@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { FileText, MapPin, Filter, Search } from "lucide-react";
+import { FileText, MapPin, Filter, Search, Book, File, Map, Compass, HelpCircle, AlertCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ResourceCard from "@/components/common/ResourceCard";
@@ -11,6 +11,7 @@ const mockResources = [
     title: "Earthquake Preparedness Guide",
     description: "Learn how to prepare for, survive during, and recover after an earthquake.",
     category: "guides",
+    icon: AlertCircle,
     isBookmarked: true,
   },
   {
@@ -18,6 +19,7 @@ const mockResources = [
     title: "First Aid Basics",
     description: "Essential first aid procedures for common emergency situations.",
     category: "guides",
+    icon: HelpCircle,
     isBookmarked: false,
   },
   {
@@ -25,6 +27,7 @@ const mockResources = [
     title: "Emergency Shelter - City Hall",
     description: "Official emergency shelter with capacity for 200 people. Facilities include food, water, and medical aid.",
     category: "locations",
+    icon: MapPin,
     isBookmarked: false,
   },
   {
@@ -32,6 +35,7 @@ const mockResources = [
     title: "Memorial Hospital",
     description: "24/7 emergency room services. Located at 1200 North Main Street.",
     category: "locations",
+    icon: MapPin,
     isBookmarked: true,
   },
   {
@@ -39,6 +43,7 @@ const mockResources = [
     title: "Flood Safety",
     description: "What to do before, during, and after a flood to stay safe and minimize damage.",
     category: "guides",
+    icon: Book,
     isBookmarked: false,
   },
   {
@@ -46,6 +51,7 @@ const mockResources = [
     title: "Fire Station #3",
     description: "Emergency services and temporary shelter. Located at 450 West Oak Drive.",
     category: "locations",
+    icon: Map,
     isBookmarked: false,
   },
 ];
@@ -126,7 +132,7 @@ const Resources = () => {
         </Tabs>
       </div>
       
-      <div className="page-container">
+      <div className="page-container pb-24">
         {isLoading ? (
           <div className="space-y-3">
             {[1, 2, 3].map((item) => (
@@ -139,14 +145,26 @@ const Resources = () => {
         ) : filteredResources.length > 0 ? (
           <div>
             {filteredResources.map((resource) => (
-              <ResourceCard
+              <div
                 key={resource.id}
-                title={resource.title}
-                description={resource.description}
-                category={resource.category === "guides" ? "Emergency Guide" : "Emergency Location"}
-                isBookmarked={resource.isBookmarked}
+                className="mb-3 p-4 bg-white rounded-lg shadow-subtle hover:shadow-card transition-shadow cursor-pointer"
                 onClick={() => handleViewResource(resource.id)}
-              />
+              >
+                <div className="flex items-start">
+                  <div className={`p-2 rounded-full ${resource.category === 'guides' ? 'bg-primary/10' : 'bg-crisis-blue/10'} mr-3`}>
+                    {resource.icon && <resource.icon className={`h-5 w-5 ${resource.category === 'guides' ? 'text-primary' : 'text-crisis-blue'}`} />}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex justify-between items-start">
+                      <h3 className="font-medium mb-1">{resource.title}</h3>
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-muted">
+                        {resource.category === "guides" ? "Guide" : "Location"}
+                      </span>
+                    </div>
+                    <p className="text-sm text-muted-foreground">{resource.description}</p>
+                  </div>
+                </div>
+              </div>
             ))}
           </div>
         ) : (

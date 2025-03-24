@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, ShieldCheck } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
+import authService from "@/services/authService";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
@@ -13,7 +14,7 @@ const ForgotPassword = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!email) {
@@ -27,19 +28,35 @@ const ForgotPassword = () => {
     
     setIsLoading(true);
     
-    // Simulate API request
-    setTimeout(() => {
-      setIsLoading(false);
-      setIsSubmitted(true);
+    try {
+      const response = await authService.forgotPassword(email);
+      
+      if (response.success) {
+        setIsSubmitted(true);
+        toast({
+          title: "Reset link sent",
+          description: "Check your email for password reset instructions",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: response.message || "Failed to send reset link",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
       toast({
-        title: "Reset link sent",
-        description: "Check your email for password reset instructions",
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
       });
-    }, 1000);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <div className="h-full flex flex-col bg-background">
+    <div className="h-full flex flex-col bg-background overflow-auto">
       <div className="p-4 border-b border-border">
         <Button 
           variant="ghost" 

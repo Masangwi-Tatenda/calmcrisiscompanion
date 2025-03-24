@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ShieldAlert, Eye, EyeOff } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
+import authService from "@/services/authService";
 
 const SignIn = () => {
   const [email, setEmail] = useState("");
@@ -14,7 +15,7 @@ const SignIn = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!email || !password) {
@@ -28,20 +29,35 @@ const SignIn = () => {
     
     setIsLoading(true);
     
-    // Simulate API request
-    setTimeout(() => {
-      setIsLoading(false);
-      localStorage.setItem("isAuthenticated", "true");
+    try {
+      const response = await authService.signIn({ email, password });
+      
+      if (response.success) {
+        toast({
+          title: "Welcome back",
+          description: "You have successfully signed in",
+        });
+        navigate("/app");
+      } else {
+        toast({
+          title: "Sign In Failed",
+          description: response.message || "Invalid email or password",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
       toast({
-        title: "Welcome back",
-        description: "You have successfully signed in",
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
       });
-      navigate("/app");
-    }, 1000);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <div className="h-full flex flex-col bg-background">
+    <div className="h-full flex flex-col bg-background overflow-auto">
       <div className="flex-1 flex flex-col justify-center px-6 py-12">
         <div className="flex flex-col items-center mb-8">
           <div className="bg-primary/10 p-3 rounded-full mb-4">

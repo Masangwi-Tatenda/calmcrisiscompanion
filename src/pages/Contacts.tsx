@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Phone, Plus, Search, Star, Users } from "lucide-react";
+import { Phone, Plus, Search, Star, Users, Mail, Shield, Building, Heart } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -13,6 +13,7 @@ const mockContacts = [
     name: "Emergency Services",
     phone: "911",
     type: "emergency",
+    icon: Shield,
     isFavorite: true,
   },
   {
@@ -20,6 +21,7 @@ const mockContacts = [
     name: "Poison Control",
     phone: "1-800-222-1222",
     type: "emergency",
+    icon: Shield,
     isFavorite: false,
   },
   {
@@ -27,6 +29,7 @@ const mockContacts = [
     name: "John Smith",
     phone: "(555) 123-4567",
     type: "personal",
+    icon: Users,
     isFavorite: true,
   },
   {
@@ -34,6 +37,7 @@ const mockContacts = [
     name: "Sarah Johnson",
     phone: "(555) 987-6543",
     type: "personal",
+    icon: Users,
     isFavorite: false,
   },
   {
@@ -41,6 +45,7 @@ const mockContacts = [
     name: "Local Fire Department",
     phone: "(555) 789-4561",
     type: "service",
+    icon: Building,
     isFavorite: false,
   },
   {
@@ -48,6 +53,7 @@ const mockContacts = [
     name: "Medical Clinic",
     phone: "(555) 234-5678",
     type: "service",
+    icon: Heart,
     isFavorite: true,
   },
 ];
@@ -152,7 +158,7 @@ const Contacts = () => {
         </Tabs>
       </div>
       
-      <div className="page-container">
+      <div className="page-container pb-24">
         {isLoading ? (
           <div className="space-y-3">
             {[1, 2, 3].map((item) => (
@@ -165,15 +171,41 @@ const Contacts = () => {
         ) : filteredContacts.length > 0 ? (
           <div>
             {filteredContacts.map((contact) => (
-              <ContactCard
+              <div
                 key={contact.id}
-                name={contact.name}
-                phone={contact.phone}
-                type={contact.type}
-                isFavorite={contact.isFavorite}
-                onCall={() => handleCall(contact)}
-                onMessage={() => handleMessage(contact)}
-              />
+                className="mb-3 p-4 bg-white rounded-lg shadow-subtle hover:shadow-card transition-shadow"
+              >
+                <div className="flex items-center">
+                  <div className="p-2 rounded-full bg-primary/10 mr-3">
+                    {contact.icon && <contact.icon className="h-5 w-5 text-primary" />}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center">
+                      <h3 className="font-medium">{contact.name}</h3>
+                      {contact.isFavorite && (
+                        <Star className="h-3.5 w-3.5 text-yellow-500 ml-2 fill-current" />
+                      )}
+                    </div>
+                    <p className="text-sm text-muted-foreground">{contact.phone}</p>
+                  </div>
+                  <div className="flex space-x-2">
+                    <button
+                      className="p-2 rounded-full bg-green-100 text-green-600"
+                      onClick={() => handleCall(contact)}
+                      aria-label={`Call ${contact.name}`}
+                    >
+                      <Phone className="h-4 w-4" />
+                    </button>
+                    <button
+                      className="p-2 rounded-full bg-blue-100 text-blue-600"
+                      onClick={() => handleMessage(contact)}
+                      aria-label={`Message ${contact.name}`}
+                    >
+                      <Mail className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
             ))}
           </div>
         ) : (
