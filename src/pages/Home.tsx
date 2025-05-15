@@ -1,10 +1,11 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bell, MapPin, FileText, Phone, MessageCircle, Shield, AlertTriangle, Sparkles } from "lucide-react";
+import { Bell, MapPin, FileText, Phone, MessageCircle, Shield, AlertTriangle, Cloud, CloudRain, CloudLightning, Info } from "lucide-react";
 import QuickAction from "@/components/common/QuickAction";
 import AlertCard from "@/components/common/AlertCard";
 import { toast } from "@/components/ui/use-toast";
+import WeatherWidget from "@/components/weather/WeatherWidget";
 
 const Home = () => {
   const [userName, setUserName] = useState("User");
@@ -13,8 +14,14 @@ const Home = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Simulate API fetch
-    const timer = setTimeout(() => {
+    // Simulate API fetch for user data
+    const timerUser = setTimeout(() => {
+      // This would be replaced with actual auth data in a real app
+      setUserName("Alex");
+    }, 500);
+
+    // Simulate API fetch for alerts
+    const timerAlerts = setTimeout(() => {
       setRecentAlerts([
         {
           id: 1,
@@ -22,6 +29,8 @@ const Home = () => {
           message: "Flash flood warning issued for your area. Avoid low-lying areas and stay indoors.",
           severity: "high",
           time: "10 minutes ago",
+          icon: CloudRain,
+          category: "weather"
         },
         {
           id: 2,
@@ -29,6 +38,8 @@ const Home = () => {
           message: "Strong thunderstorms expected this afternoon with possible hail.",
           severity: "medium",
           time: "1 hour ago",
+          icon: CloudLightning,
+          category: "weather"
         },
         {
           id: 3,
@@ -36,6 +47,8 @@ const Home = () => {
           message: "Major accident on Highway 101. Expect delays of 30+ minutes.",
           severity: "medium",
           time: "2 hours ago",
+          icon: AlertTriangle,
+          category: "traffic"
         },
         {
           id: 4,
@@ -43,12 +56,17 @@ const Home = () => {
           message: "Scheduled maintenance outage in your area from 10pm-2am tonight.",
           severity: "low",
           time: "3 hours ago",
+          icon: Info,
+          category: "utility"
         },
       ]);
       setIsLoading(false);
     }, 1000);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timerUser);
+      clearTimeout(timerAlerts);
+    };
   }, []);
 
   const handleSafetyCheck = () => {
@@ -84,28 +102,7 @@ const Home = () => {
       </div>
 
       <div className="mb-8">
-        <div className="card-crisis bg-primary p-4 rounded-xl text-white">
-          <div className="flex items-center">
-            <Sparkles className="h-8 w-8 mr-3" />
-            <div>
-              <h2 className="font-semibold">Stay Prepared</h2>
-              <p className="text-sm opacity-90">Complete your emergency plan</p>
-            </div>
-          </div>
-          <div className="bg-white/10 rounded-lg p-3 mt-3">
-            <div className="flex justify-between items-center">
-              <div className="flex items-center">
-                <div className="w-10 h-1.5 bg-white/30 rounded-full overflow-hidden">
-                  <div className="w-4 h-full bg-white rounded-full"></div>
-                </div>
-                <span className="text-xs ml-3">2/5 steps</span>
-              </div>
-              <button className="text-xs bg-white/20 px-3 py-1 rounded-full hover:bg-white/30 transition-colors">
-                Continue
-              </button>
-            </div>
-          </div>
-        </div>
+        <WeatherWidget />
       </div>
 
       <div className="mb-8">
@@ -154,7 +151,8 @@ const Home = () => {
                 message={alert.message}
                 severity={alert.severity}
                 time={alert.time}
-                onClick={() => navigate("/app/alerts")}
+                icon={alert.icon}
+                onClick={() => navigate(`/app/alerts/${alert.id}`)}
               />
             ))}
           </div>

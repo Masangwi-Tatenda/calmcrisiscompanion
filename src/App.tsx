@@ -15,7 +15,9 @@ import FillProfile from "./pages/FillProfile";
 import MainLayout from "./components/layouts/MainLayout";
 import Home from "./pages/Home";
 import Alerts from "./pages/Alerts";
+import AlertDetail from "./pages/AlertDetail";
 import Resources from "./pages/Resources";
+import ResourceDetail from "./pages/ResourceDetail";
 import Contacts from "./pages/Contacts";
 import Profile from "./pages/Profile";
 import Chat from "./pages/Chat";
@@ -41,7 +43,9 @@ const App = () => (
           <Route path="/app" element={<MainLayout />}>
             <Route index element={<Home />} />
             <Route path="alerts" element={<Alerts />} />
+            <Route path="alerts/:id" element={<AlertDetail />} />
             <Route path="resources" element={<Resources />} />
+            <Route path="resources/:id" element={<ResourceDetail />} />
             <Route path="contacts" element={<Contacts />} />
             <Route path="profile" element={<EnhancedProfile />} />
             <Route path="chat" element={<Chat />} />

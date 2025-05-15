@@ -1,6 +1,6 @@
 
 import { useState, useRef, useEffect } from "react";
-import { Send, ArrowLeft, MoreVertical, Users } from "lucide-react";
+import { Send, ArrowLeft, MoreVertical, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
@@ -43,6 +43,7 @@ const Chat = () => {
   const [newMessage, setNewMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [showParticipants, setShowParticipants] = useState(false);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
 
   const participants = [
     { name: "Sarah", status: "online" },
@@ -95,7 +96,7 @@ const Chat = () => {
           </Button>
           <div>
             <h1 className="font-bold">Community Emergency Chat</h1>
-            <p className="text-xs text-muted-foreground">5 participants</p>
+            <p className="text-xs text-muted-foreground">{participants.filter(p => p.status === "online").length} participants online</p>
           </div>
         </div>
         <div className="flex items-center space-x-1">
@@ -115,8 +116,8 @@ const Chat = () => {
       
       <div className="relative flex-1 overflow-hidden">
         <div className="absolute inset-0 flex">
-          <div className={`flex-1 overflow-y-auto p-4 hide-scrollbar ${showParticipants ? 'w-2/3' : 'w-full'} transition-all duration-300`}>
-            <div className="space-y-4">
+          <div className={`flex-1 overflow-y-auto p-4 hide-scrollbar ${showParticipants ? 'w-2/3' : 'w-full'} transition-all duration-300`} ref={chatContainerRef}>
+            <div className="space-y-4 pb-20">
               {messages.map((message) => (
                 <div
                   key={message.id}
@@ -150,9 +151,19 @@ const Chat = () => {
           </div>
 
           {showParticipants && (
-            <div className="w-1/3 border-l border-border p-4 overflow-y-auto animate-slide-in-right">
-              <h3 className="font-medium mb-3">Participants</h3>
-              <div className="space-y-2">
+            <div className="w-1/3 border-l border-border bg-background overflow-y-auto animate-slide-in-right">
+              <div className="p-4 flex items-center justify-between border-b border-border">
+                <h3 className="font-medium">Participants</h3>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="p-1" 
+                  onClick={() => setShowParticipants(false)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="p-2">
                 {participants.map((participant, index) => (
                   <div key={index} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted">
                     <span>{participant.name}</span>
@@ -165,7 +176,7 @@ const Chat = () => {
         </div>
       </div>
       
-      <div className="p-4 border-t border-border">
+      <div className="fixed bottom-16 left-0 right-0 p-4 bg-background border-t border-border">
         <div className="flex">
           <textarea
             className="flex-1 p-3 rounded-l-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/30 transition duration-200 resize-none"

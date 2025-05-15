@@ -3,15 +3,32 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { Home, AlertTriangle, FileText, Phone, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useScroll } from "@/contexts/ScrollContext";
+import { useEffect, useState } from "react";
 
 const BottomNavigationEnhanced = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isScrollingDown } = useScroll();
+  const [isVisible, setIsVisible] = useState(true);
   
   const isActive = (path: string) => {
     return location.pathname.includes(path);
   };
+
+  // Enhanced hiding logic with smoother transitions
+  useEffect(() => {
+    let timeout: NodeJS.Timeout;
+    
+    if (isScrollingDown) {
+      timeout = setTimeout(() => {
+        setIsVisible(false);
+      }, 100);
+    } else {
+      setIsVisible(true);
+    }
+    
+    return () => clearTimeout(timeout);
+  }, [isScrollingDown]);
 
   const navItems = [
     { 
@@ -50,7 +67,7 @@ const BottomNavigationEnhanced = () => {
     <div 
       className={cn(
         "fixed bottom-0 left-0 right-0 bg-background border-t border-border z-50 transition-transform duration-300 ease-in-out",
-        isScrollingDown ? "translate-y-full" : "translate-y-0"
+        !isVisible ? "translate-y-full" : "translate-y-0"
       )}
     >
       <div className="flex justify-between items-center px-2">
