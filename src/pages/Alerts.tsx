@@ -4,6 +4,7 @@ import { Bell, Filter } from "lucide-react";
 import AlertCard from "@/components/common/AlertCard";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useNavigate } from "react-router-dom";
 
 const mockAlerts = [
   {
@@ -13,6 +14,7 @@ const mockAlerts = [
     severity: "critical",
     category: "weather",
     time: "10 minutes ago",
+    location: "Downtown area, Riverside",
   },
   {
     id: 2,
@@ -21,6 +23,7 @@ const mockAlerts = [
     severity: "medium",
     category: "weather",
     time: "1 hour ago",
+    location: "Entire county",
   },
   {
     id: 3,
@@ -29,6 +32,7 @@ const mockAlerts = [
     severity: "high",
     category: "traffic",
     time: "2 hours ago",
+    location: "Highway 101, exits 25-30",
   },
   {
     id: 4,
@@ -37,6 +41,7 @@ const mockAlerts = [
     severity: "medium",
     category: "utility",
     time: "3 hours ago",
+    location: "Downtown district",
   },
   {
     id: 5,
@@ -45,6 +50,7 @@ const mockAlerts = [
     severity: "low",
     category: "health",
     time: "Yesterday",
+    location: "City-wide",
   },
 ];
 
@@ -54,6 +60,7 @@ const Alerts = () => {
   const [filteredAlerts, setFilteredAlerts] = useState<any[]>([]);
   const [severityFilter, setSeverityFilter] = useState("all");
   const [activeTab, setActiveTab] = useState("all");
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Simulate API fetch
@@ -83,8 +90,7 @@ const Alerts = () => {
   }, [alerts, activeTab, severityFilter]);
 
   const handleViewAlert = (alertId: number) => {
-    console.log("Viewing alert details for ID:", alertId);
-    // Would navigate to alert details or show modal
+    navigate(`/app/alerts/${alertId}`);
   };
 
   return (
@@ -144,10 +150,13 @@ const Alerts = () => {
             {filteredAlerts.map((alert) => (
               <AlertCard
                 key={alert.id}
+                id={alert.id}
                 title={alert.title}
                 message={alert.message}
                 severity={alert.severity}
                 time={alert.time}
+                category={alert.category}
+                location={alert.location}
                 onClick={() => handleViewAlert(alert.id)}
               />
             ))}

@@ -4,6 +4,7 @@ import { FileText, MapPin, Filter, Search, Book, File, Map, Compass, HelpCircle,
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ResourceCard from "@/components/common/ResourceCard";
+import { useNavigate } from "react-router-dom";
 
 const mockResources = [
   {
@@ -62,6 +63,7 @@ const Resources = () => {
   const [filteredResources, setFilteredResources] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("all");
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Simulate API fetch
@@ -96,8 +98,7 @@ const Resources = () => {
   }, [resources, activeTab, searchQuery]);
 
   const handleViewResource = (resourceId: number) => {
-    console.log("Viewing resource details for ID:", resourceId);
-    // Would navigate to resource details or show modal
+    navigate(`/app/resources/${resourceId}`);
   };
 
   return (

@@ -176,7 +176,7 @@ const Chat = () => {
         </div>
       </div>
       
-      <div className="fixed bottom-16 left-0 right-0 p-4 bg-background border-t border-border">
+      <div className="p-4 bg-background border-t border-border">
         <div className="flex">
           <textarea
             className="flex-1 p-3 rounded-l-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/30 transition duration-200 resize-none"

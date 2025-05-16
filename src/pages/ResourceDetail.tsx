@@ -1,9 +1,15 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, AlertCircle, HelpCircle, Book, Compass, FileText, Share2, Bookmark, MapPin, ExternalLink, Clock } from "lucide-react";
+import { 
+  ArrowLeft, AlertCircle, HelpCircle, Book, Compass, FileText, 
+  Share2, Bookmark, MapPin, ExternalLink, Clock, Phone, 
+  CheckCircle, Info, Users, Calendar, HomeIcon, AlertOctagon, List
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface Resource {
   id: number;
@@ -23,9 +29,17 @@ interface Resource {
     coordinates: { lat: number; lng: number };
     hours: string;
     phone: string;
+    email?: string;
+    website?: string;
+    additionalInfo?: string;
+    accessibility?: string[];
   };
-  links?: { title: string; url: string }[];
+  links?: { title: string; url: string; description?: string }[];
   lastUpdated?: string;
+  checklist?: { item: string; description?: string }[];
+  images?: { url: string; caption: string }[];
+  faqs?: { question: string; answer: string }[];
+  relatedResources?: { id: number; title: string; category: string }[];
 }
 
 // Mock data
@@ -53,6 +67,26 @@ const mockResourceDetails: Record<string, Resource> = {
         }
       ]
     },
+    checklist: [
+      { item: "Create an emergency kit", description: "Include water, food, medications, first aid supplies, flashlight, and battery-powered radio" },
+      { item: "Secure heavy furniture to walls", description: "Bookshelves, cabinets, and appliances should be anchored" },
+      { item: "Locate utility shutoffs", description: "Know how to turn off gas, water, and electricity" },
+      { item: "Establish a family meeting place", description: "Choose locations both in your neighborhood and outside your area" },
+      { item: "Store emergency contacts", description: "Keep a written list in case your phone is unavailable" }
+    ],
+    faqs: [
+      { question: "How much water should I store?", answer: "At least one gallon per person per day for a minimum of three days." },
+      { question: "Are doorways safe during earthquakes?", answer: "Contrary to popular belief, doorways are not safer than other locations. It's better to take cover under a sturdy table." },
+      { question: "How often should I update my emergency kit?", answer: "Check your kit every six months. Replace expired medications and food, update documents, and check batteries." }
+    ],
+    links: [
+      { title: "CDC Earthquake Preparedness", url: "#", description: "Comprehensive guide from the Centers for Disease Control" },
+      { title: "FEMA Emergency Supply List", url: "#", description: "Detailed checklist of recommended emergency supplies" }
+    ],
+    relatedResources: [
+      { id: 2, title: "First Aid Basics", category: "guides" },
+      { id: 5, title: "Flood Safety", category: "guides" }
+    ],
     lastUpdated: "3 months ago"
   },
   "2": {
@@ -75,9 +109,36 @@ const mockResourceDetails: Record<string, Resource> = {
         {
           title: "Treating Burns",
           text: "For minor burns, cool the area with cool running water for 10-15 minutes. Do not use ice. Cover with a clean, dry bandage. For severe burns, call emergency services immediately."
+        },
+        {
+          title: "Choking Response",
+          text: "For a conscious adult, stand behind them and perform the Heimlich maneuver by placing your hands just above their navel and giving quick upward thrusts until the object is dislodged."
+        },
+        {
+          title: "Recognizing Stroke Symptoms",
+          text: "Remember FAST: Face drooping, Arm weakness, Speech difficulty, Time to call emergency services. Immediate treatment is crucial for stroke victims."
         }
       ]
     },
+    checklist: [
+      { item: "Assemble a first aid kit", description: "Include bandages, gauze, adhesive tape, scissors, tweezers, antiseptic wipes" },
+      { item: "Learn CPR", description: "Take a certified course from the Red Cross or American Heart Association" },
+      { item: "Know emergency numbers", description: "Keep local emergency service numbers accessible" },
+      { item: "Recognize allergic reactions", description: "Be aware of signs like swelling, hives, and difficulty breathing" }
+    ],
+    faqs: [
+      { question: "How often should I replace items in my first aid kit?", answer: "Check expiration dates regularly, typically every six months, and replace any expired medications or supplies." },
+      { question: "Should I move an injured person?", answer: "Generally, it's best not to move someone with a serious injury unless they're in immediate danger. Moving them could worsen injuries, especially spinal injuries." },
+      { question: "When should I seek professional medical help for a burn?", answer: "Seek immediate medical attention for burns that are larger than 3 inches, on the face, hands, feet, genitals, or major joints, or if the burn appears deep (affects multiple layers of skin)." }
+    ],
+    links: [
+      { title: "Red Cross First Aid App", url: "#", description: "Free mobile app with step-by-step instructions" },
+      { title: "CPR Training Courses", url: "#", description: "Find local certification classes" }
+    ],
+    relatedResources: [
+      { id: 1, title: "Earthquake Preparedness Guide", category: "guides" },
+      { id: 4, title: "Memorial Hospital", category: "locations" }
+    ],
     lastUpdated: "6 months ago"
   },
   "3": {
@@ -91,11 +152,41 @@ const mockResourceDetails: Record<string, Resource> = {
       address: "123 Main Street, Downtown",
       coordinates: { lat: 34.0522, lng: -118.2437 },
       hours: "24/7 during emergencies",
-      phone: "(555) 123-4567"
+      phone: "(555) 123-4567",
+      email: "emergency@cityhall.gov",
+      website: "cityhall.gov/emergency",
+      additionalInfo: "Backup generator capacity for 72 hours. Pets allowed in designated areas.",
+      accessibility: ["Wheelchair accessible", "ADA compliant restrooms", "Interpreter services available"]
     },
+    content: {
+      sections: [
+        {
+          title: "Available Services",
+          text: "During emergencies, this shelter provides cots, blankets, meals, water, basic medical care, charging stations for devices, and information updates. Staff includes medical professionals, security personnel, and social workers."
+        },
+        {
+          title: "What to Bring",
+          text: "Personal medications, important documents, comfort items, change of clothes, personal hygiene items, and special items for children or those with special needs. Food and water are provided."
+        },
+        {
+          title: "Registration Process",
+          text: "Upon arrival, all individuals must check in at the registration desk. You'll receive a wristband and be assigned to an area. Please inform staff of any medical conditions or special needs."
+        }
+      ]
+    },
+    faqs: [
+      { question: "Can I bring my pet?", answer: "Yes, pets are allowed in designated areas. Please bring pet food, carriers, and any medications they need." },
+      { question: "How long can I stay?", answer: "The shelter remains open for the duration of the emergency and typically for 24-48 hours after conditions have been deemed safe." },
+      { question: "Is transportation available?", answer: "During large-scale emergencies, shuttle services are available from designated pickup points. Call the emergency hotline for current pickup locations." }
+    ],
     links: [
-      { title: "Shelter Website", url: "#" },
-      { title: "Current Capacity Status", url: "#" }
+      { title: "Shelter Website", url: "#", description: "Current status and capacity updates" },
+      { title: "Emergency Alert Signup", url: "#", description: "Register for shelter opening notifications" },
+      { title: "Volunteer Opportunities", url: "#", description: "Help staff the shelter during emergencies" }
+    ],
+    relatedResources: [
+      { id: 4, title: "Memorial Hospital", category: "locations" },
+      { id: 6, title: "Fire Station #3", category: "locations" }
     ],
     lastUpdated: "2 weeks ago"
   },
@@ -110,11 +201,41 @@ const mockResourceDetails: Record<string, Resource> = {
       address: "1200 North Main Street, Easton",
       coordinates: { lat: 34.0522, lng: -118.2437 },
       hours: "Emergency services: 24/7, Visitor hours: 8am-8pm",
-      phone: "(555) 987-6543"
+      phone: "(555) 987-6543",
+      email: "info@memorialhospital.org",
+      website: "memorialhospital.org",
+      additionalInfo: "Level II Trauma Center with helipad. Multiple backup power systems.",
+      accessibility: ["Wheelchair accessible entrances", "Translation services", "ASL interpreters available"]
     },
+    content: {
+      sections: [
+        {
+          title: "Emergency Department",
+          text: "The emergency department is staffed 24/7 by board-certified emergency physicians and trauma specialists. Features include 25 treatment rooms, dedicated trauma bays, and a separate pediatric emergency area."
+        },
+        {
+          title: "Disaster Response Capabilities",
+          text: "The hospital maintains disaster response protocols and regularly conducts emergency drills. During major emergencies, the facility can expand capacity by 35% and has supplies to operate independently for up to 96 hours."
+        },
+        {
+          title: "Special Resources",
+          text: "Includes burn treatment facilities, decontamination areas for chemical emergencies, and isolation rooms for infectious disease management. The hospital also houses a blood bank and advanced imaging services."
+        }
+      ]
+    },
+    faqs: [
+      { question: "What insurance plans are accepted?", answer: "The hospital accepts most major insurance plans. During declared emergencies, special billing procedures may be implemented." },
+      { question: "Is there a helicopter landing pad?", answer: "Yes, the hospital has a helipad for emergency air transport with 24/7 capability." },
+      { question: "Are mental health services available?", answer: "Yes, the emergency department has psychiatric specialists available and a dedicated mental health crisis team." }
+    ],
     links: [
-      { title: "Hospital Website", url: "#" },
-      { title: "Emergency Room Wait Times", url: "#" }
+      { title: "Hospital Website", url: "#", description: "Information about services and departments" },
+      { title: "Emergency Room Wait Times", url: "#", description: "Real-time updates on current wait times" },
+      { title: "Patient Portal", url: "#", description: "Access medical records and test results" }
+    ],
+    relatedResources: [
+      { id: 3, title: "Emergency Shelter - City Hall", category: "locations" },
+      { id: 2, title: "First Aid Basics", category: "guides" }
     ],
     lastUpdated: "1 week ago"
   }
@@ -125,6 +246,7 @@ const ResourceDetail = () => {
   const [resource, setResource] = useState<Resource | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isBookmarked, setIsBookmarked] = useState(false);
+  const [activeTab, setActiveTab] = useState("overview");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -148,6 +270,21 @@ const ResourceDetail = () => {
   const handleToggleBookmark = () => {
     setIsBookmarked(!isBookmarked);
     // API call would go here in a real app
+  };
+
+  const handleCallPhone = (phone: string) => {
+    // In a real app, this would initiate a phone call
+    console.log("Calling:", phone);
+  };
+
+  const handleOpenWebsite = (website: string) => {
+    // In a real app, this would open the website
+    console.log("Opening website:", website);
+  };
+
+  const handleOpenMap = (address: string) => {
+    // In a real app, this would open maps
+    console.log("Opening directions to:", address);
   };
 
   if (isLoading) {
@@ -219,8 +356,8 @@ const ResourceDetail = () => {
   const Icon = resource.icon || FileText;
 
   return (
-    <div className="page-container pb-24">
-      <div className="flex items-center justify-between mb-4">
+    <div className="page-container pb-24 overflow-y-auto">
+      <div className="flex items-center justify-between mb-4 sticky top-0 bg-background z-10 py-2">
         <Button 
           variant="ghost" 
           size="sm"
@@ -264,83 +401,292 @@ const ResourceDetail = () => {
           </div>
         </div>
         <p className="text-base mb-3">{resource.description}</p>
-        <div className="flex items-center text-xs text-muted-foreground mb-6">
+        <div className="flex items-center text-xs text-muted-foreground mb-4">
           <Clock className="h-3 w-3 mr-1" /> 
           <span>Last updated: {resource.lastUpdated}</span>
         </div>
 
-        {resource.category === "guides" && resource.content && (
-          <div className="space-y-6">
-            {resource.content.sections.map((section, index) => (
-              <div key={index} className="resource-section">
-                <h2 className="text-lg font-semibold mb-2">{section.title}</h2>
-                <p className="text-sm">{section.text}</p>
-              </div>
-            ))}
-          </div>
-        )}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            {resource.category === "guides" && <TabsTrigger value="checklist">Checklist</TabsTrigger>}
+            {resource.category === "locations" && <TabsTrigger value="details">Details</TabsTrigger>}
+            <TabsTrigger value="faqs">FAQs</TabsTrigger>
+          </TabsList>
+        </Tabs>
 
-        {resource.category === "locations" && resource.location && (
-          <div className="space-y-4">
-            <div>
-              <h2 className="text-lg font-semibold mb-2">Location Information</h2>
-              <div className="bg-muted p-4 rounded-lg">
-                <div className="flex items-start mb-3">
-                  <MapPin className="h-4 w-4 mt-0.5 mr-2 flex-shrink-0" />
-                  <p className="text-sm">{resource.location.address}</p>
+        <TabsContent value="overview" className="space-y-6 mt-0">
+          {resource.category === "guides" && resource.content && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg flex items-center">
+                  <FileText className="h-5 w-5 mr-2" />
+                  Guide Content
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  {resource.content.sections.map((section, index) => (
+                    <div key={index} className="resource-section">
+                      <h2 className="text-lg font-semibold mb-2">{section.title}</h2>
+                      <p className="text-sm">{section.text}</p>
+                    </div>
+                  ))}
                 </div>
-                <div className="flex items-start mb-3">
-                  <Clock className="h-4 w-4 mt-0.5 mr-2 flex-shrink-0" />
-                  <p className="text-sm">{resource.location.hours}</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {resource.category === "locations" && resource.location && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg flex items-center">
+                  <MapPin className="h-5 w-5 mr-2" />
+                  Location Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3 mb-4">
+                  <div className="flex items-start">
+                    <MapPin className="h-4 w-4 mt-0.5 mr-2 flex-shrink-0 text-muted-foreground" />
+                    <div>
+                      <p className="text-sm">{resource.location.address}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start">
+                    <Clock className="h-4 w-4 mt-0.5 mr-2 flex-shrink-0 text-muted-foreground" />
+                    <div>
+                      <p className="text-sm">{resource.location.hours}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start">
+                    <Phone className="h-4 w-4 mt-0.5 mr-2 flex-shrink-0 text-muted-foreground" />
+                    <div>
+                      <p className="text-sm">{resource.location.phone}</p>
+                    </div>
+                  </div>
                 </div>
-                <Button 
-                  variant="secondary" 
-                  size="sm" 
-                  className="w-full mt-2"
-                  onClick={() => {
-                    // This would use a maps API in a real app
-                    console.log("Opening directions to:", resource.location?.address);
-                  }}
-                >
-                  Get Directions
-                </Button>
-              </div>
-            </div>
+                <div className="flex flex-col space-y-2">
+                  <Button 
+                    variant="secondary" 
+                    className="w-full"
+                    onClick={() => handleOpenMap(resource.location!.address)}
+                  >
+                    <MapPin className="h-4 w-4 mr-2" />
+                    Get Directions
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => handleCallPhone(resource.location!.phone)}
+                  >
+                    <Phone className="h-4 w-4 mr-2" />
+                    Call
+                  </Button>
+                  {resource.location.website && (
+                    <Button 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={() => handleOpenWebsite(resource.location!.website!)}
+                    >
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      Visit Website
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
-            <div>
-              <h2 className="text-lg font-semibold mb-2">Contact</h2>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="w-full"
-                onClick={() => {
-                  // This would initiate a call in a real app
-                  console.log("Calling:", resource.location?.phone);
-                }}
-              >
-                {resource.location.phone}
-              </Button>
-            </div>
-          </div>
+          {resource.location && resource.content && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg flex items-center">
+                  <Info className="h-5 w-5 mr-2" />
+                  Facility Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {resource.content.sections.map((section, index) => (
+                    <div key={index}>
+                      <h3 className="text-base font-medium mb-1">{section.title}</h3>
+                      <p className="text-sm">{section.text}</p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {resource.links && resource.links.length > 0 && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg flex items-center">
+                  <ExternalLink className="h-5 w-5 mr-2" />
+                  Related Links
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {resource.links.map((link, index) => (
+                    <div key={index} className="p-3 bg-muted rounded-lg">
+                      <p className="font-medium">{link.title}</p>
+                      {link.description && (
+                        <p className="text-sm text-muted-foreground mb-2">{link.description}</p>
+                      )}
+                      <Button variant="secondary" size="sm" className="w-full">
+                        <ExternalLink className="h-3 w-3 mr-2" />
+                        Open Resource
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {resource.relatedResources && resource.relatedResources.length > 0 && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg flex items-center">
+                  <Compass className="h-5 w-5 mr-2" />
+                  Related Resources
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {resource.relatedResources.map((relatedResource, index) => (
+                    <div 
+                      key={index}
+                      className="p-3 border border-border rounded-lg flex items-center justify-between hover:bg-muted cursor-pointer"
+                      onClick={() => navigate(`/app/resources/${relatedResource.id}`)}
+                    >
+                      <div className="flex items-center">
+                        <div className={`p-2 rounded-full ${relatedResource.category === 'guides' ? 'bg-primary/10' : 'bg-crisis-blue/10'} mr-3`}>
+                          {relatedResource.category === 'guides' ? 
+                            <FileText className="h-4 w-4 text-primary" /> : 
+                            <MapPin className="h-4 w-4 text-crisis-blue" />
+                          }
+                        </div>
+                        <span>{relatedResource.title}</span>
+                      </div>
+                      <ArrowLeft className="h-4 w-4 rotate-180" />
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        {resource.category === "guides" && (
+          <TabsContent value="checklist" className="mt-0">
+            {resource.checklist && (
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg flex items-center">
+                    <CheckCircle className="h-5 w-5 mr-2" />
+                    Preparation Checklist
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {resource.checklist.map((item, index) => (
+                      <div key={index} className="flex items-start p-3 border-b last:border-0 border-border">
+                        <div className="flex h-5 w-5 items-center justify-center rounded-full border mr-3 mt-0.5">
+                          <CheckCircle className="h-3 w-3 text-muted-foreground" />
+                        </div>
+                        <div>
+                          <p className="font-medium">{item.item}</p>
+                          {item.description && (
+                            <p className="text-sm text-muted-foreground">{item.description}</p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
         )}
 
-        {resource.links && resource.links.length > 0 && (
-          <div className="mt-6">
-            <h2 className="text-lg font-semibold mb-2">Related Links</h2>
-            <div className="space-y-2">
-              {resource.links.map((link, index) => (
-                <Button
-                  key={index}
-                  variant="outline"
-                  className="w-full justify-between"
-                >
-                  <span>{link.title}</span>
-                  <ExternalLink className="h-4 w-4" />
-                </Button>
-              ))}
-            </div>
-          </div>
+        {resource.category === "locations" && (
+          <TabsContent value="details" className="mt-0 space-y-6">
+            {resource.location?.accessibility && (
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg flex items-center">
+                    <Users className="h-5 w-5 mr-2" />
+                    Accessibility
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-2">
+                    {resource.location.accessibility.map((item, index) => (
+                      <li key={index} className="flex items-start">
+                        <CheckCircle className="h-4 w-4 mr-2 text-green-500 mt-0.5" />
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            )}
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg flex items-center">
+                  <InfoIcon className="h-5 w-5 mr-2" />
+                  Additional Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {resource.location?.additionalInfo && (
+                  <p className="mb-4">{resource.location.additionalInfo}</p>
+                )}
+                <div className="space-y-2">
+                  {resource.location?.email && (
+                    <div className="flex items-center">
+                      <span className="text-muted-foreground w-20">Email:</span>
+                      <span className="font-medium">{resource.location.email}</span>
+                    </div>
+                  )}
+                  {resource.location?.website && (
+                    <div className="flex items-center">
+                      <span className="text-muted-foreground w-20">Website:</span>
+                      <span className="font-medium">{resource.location.website}</span>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
         )}
+
+        <TabsContent value="faqs" className="mt-0">
+          {resource.faqs && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg flex items-center">
+                  <HelpCircle className="h-5 w-5 mr-2" />
+                  Frequently Asked Questions
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {resource.faqs.map((faq, index) => (
+                    <div key={index} className="p-3 bg-muted rounded-lg">
+                      <p className="font-medium mb-1">{faq.question}</p>
+                      <p className="text-sm">{faq.answer}</p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
       </div>
     </div>
   );
