@@ -405,203 +405,171 @@ const ResourceDetail = () => {
           <span>Last updated: {resource.lastUpdated}</span>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             {resource.category === "guides" && <TabsTrigger value="checklist">Checklist</TabsTrigger>}
             {resource.category === "locations" && <TabsTrigger value="details">Details</TabsTrigger>}
             <TabsTrigger value="faqs">FAQs</TabsTrigger>
           </TabsList>
-        </Tabs>
 
-        <TabsContent value="overview" className="space-y-6 mt-0">
-          {resource.category === "guides" && resource.content && (
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center">
-                  <FileText className="h-5 w-5 mr-2" />
-                  Guide Content
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  {resource.content.sections.map((section, index) => (
-                    <div key={index} className="resource-section">
-                      <h2 className="text-lg font-semibold mb-2">{section.title}</h2>
-                      <p className="text-sm">{section.text}</p>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {resource.category === "locations" && resource.location && (
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center">
-                  <MapPin className="h-5 w-5 mr-2" />
-                  Location Information
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3 mb-4">
-                  <div className="flex items-start">
-                    <MapPin className="h-4 w-4 mt-0.5 mr-2 flex-shrink-0 text-muted-foreground" />
-                    <div>
-                      <p className="text-sm">{resource.location.address}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start">
-                    <Clock className="h-4 w-4 mt-0.5 mr-2 flex-shrink-0 text-muted-foreground" />
-                    <div>
-                      <p className="text-sm">{resource.location.hours}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start">
-                    <Phone className="h-4 w-4 mt-0.5 mr-2 flex-shrink-0 text-muted-foreground" />
-                    <div>
-                      <p className="text-sm">{resource.location.phone}</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex flex-col space-y-2">
-                  <Button 
-                    variant="secondary" 
-                    className="w-full"
-                    onClick={() => handleOpenMap(resource.location!.address)}
-                  >
-                    <MapPin className="h-4 w-4 mr-2" />
-                    Get Directions
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => handleCallPhone(resource.location!.phone)}
-                  >
-                    <Phone className="h-4 w-4 mr-2" />
-                    Call
-                  </Button>
-                  {resource.location.website && (
-                    <Button 
-                      variant="outline" 
-                      className="w-full"
-                      onClick={() => handleOpenWebsite(resource.location!.website!)}
-                    >
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      Visit Website
-                    </Button>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {resource.location && resource.content && (
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center">
-                  <Info className="h-5 w-5 mr-2" />
-                  Facility Information
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {resource.content.sections.map((section, index) => (
-                    <div key={index}>
-                      <h3 className="text-base font-medium mb-1">{section.title}</h3>
-                      <p className="text-sm">{section.text}</p>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {resource.links && resource.links.length > 0 && (
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center">
-                  <ExternalLink className="h-5 w-5 mr-2" />
-                  Related Links
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {resource.links.map((link, index) => (
-                    <div key={index} className="p-3 bg-muted rounded-lg">
-                      <p className="font-medium">{link.title}</p>
-                      {link.description && (
-                        <p className="text-sm text-muted-foreground mb-2">{link.description}</p>
-                      )}
-                      <Button variant="secondary" size="sm" className="w-full">
-                        <ExternalLink className="h-3 w-3 mr-2" />
-                        Open Resource
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {resource.relatedResources && resource.relatedResources.length > 0 && (
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center">
-                  <Compass className="h-5 w-5 mr-2" />
-                  Related Resources
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {resource.relatedResources.map((relatedResource, index) => (
-                    <div 
-                      key={index}
-                      className="p-3 border border-border rounded-lg flex items-center justify-between hover:bg-muted cursor-pointer"
-                      onClick={() => navigate(`/app/resources/${relatedResource.id}`)}
-                    >
-                      <div className="flex items-center">
-                        <div className={`p-2 rounded-full ${relatedResource.category === 'guides' ? 'bg-primary/10' : 'bg-crisis-blue/10'} mr-3`}>
-                          {relatedResource.category === 'guides' ? 
-                            <FileText className="h-4 w-4 text-primary" /> : 
-                            <MapPin className="h-4 w-4 text-crisis-blue" />
-                          }
-                        </div>
-                        <span>{relatedResource.title}</span>
-                      </div>
-                      <ArrowLeft className="h-4 w-4 rotate-180" />
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-
-        {resource.category === "guides" && (
-          <TabsContent value="checklist" className="mt-0">
-            {resource.checklist && (
+          <TabsContent value="overview" className="space-y-6 mt-2">
+            {resource.category === "guides" && resource.content && (
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-lg flex items-center">
-                    <CheckCircle className="h-5 w-5 mr-2" />
-                    Preparation Checklist
+                    <FileText className="h-5 w-5 mr-2" />
+                    Guide Content
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
+                    {resource.content.sections.map((section, index) => (
+                      <div key={index} className="resource-section">
+                        <h2 className="text-lg font-semibold mb-2">{section.title}</h2>
+                        <p className="text-sm">{section.text}</p>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {resource.category === "locations" && resource.location && (
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg flex items-center">
+                    <MapPin className="h-5 w-5 mr-2" />
+                    Location Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3 mb-4">
+                    <div className="flex items-start">
+                      <MapPin className="h-4 w-4 mt-0.5 mr-2 flex-shrink-0 text-muted-foreground" />
+                      <div>
+                        <p className="text-sm">{resource.location.address}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start">
+                      <Clock className="h-4 w-4 mt-0.5 mr-2 flex-shrink-0 text-muted-foreground" />
+                      <div>
+                        <p className="text-sm">{resource.location.hours}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start">
+                      <Phone className="h-4 w-4 mt-0.5 mr-2 flex-shrink-0 text-muted-foreground" />
+                      <div>
+                        <p className="text-sm">{resource.location.phone}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex flex-col space-y-2">
+                    <Button 
+                      variant="secondary" 
+                      className="w-full"
+                      onClick={() => handleOpenMap(resource.location!.address)}
+                    >
+                      <MapPin className="h-4 w-4 mr-2" />
+                      Get Directions
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={() => handleCallPhone(resource.location!.phone)}
+                    >
+                      <Phone className="h-4 w-4 mr-2" />
+                      Call
+                    </Button>
+                    {resource.location.website && (
+                      <Button 
+                        variant="outline" 
+                        className="w-full"
+                        onClick={() => handleOpenWebsite(resource.location!.website!)}
+                      >
+                        <ExternalLink className="h-4 w-4 mr-2" />
+                        Visit Website
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {resource.location && resource.content && (
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg flex items-center">
+                    <Info className="h-5 w-5 mr-2" />
+                    Facility Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {resource.content.sections.map((section, index) => (
+                      <div key={index}>
+                        <h3 className="text-base font-medium mb-1">{section.title}</h3>
+                        <p className="text-sm">{section.text}</p>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {resource.links && resource.links.length > 0 && (
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg flex items-center">
+                    <ExternalLink className="h-5 w-5 mr-2" />
+                    Related Links
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {resource.checklist.map((item, index) => (
-                      <div key={index} className="flex items-start p-3 border-b last:border-0 border-border">
-                        <div className="flex h-5 w-5 items-center justify-center rounded-full border mr-3 mt-0.5">
-                          <CheckCircle className="h-3 w-3 text-muted-foreground" />
+                    {resource.links.map((link, index) => (
+                      <div key={index} className="p-3 bg-muted rounded-lg">
+                        <p className="font-medium">{link.title}</p>
+                        {link.description && (
+                          <p className="text-sm text-muted-foreground mb-2">{link.description}</p>
+                        )}
+                        <Button variant="secondary" size="sm" className="w-full">
+                          <ExternalLink className="h-3 w-3 mr-2" />
+                          Open Resource
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {resource.relatedResources && resource.relatedResources.length > 0 && (
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg flex items-center">
+                    <Compass className="h-5 w-5 mr-2" />
+                    Related Resources
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {resource.relatedResources.map((relatedResource, index) => (
+                      <div 
+                        key={index}
+                        className="p-3 border border-border rounded-lg flex items-center justify-between hover:bg-muted cursor-pointer"
+                        onClick={() => navigate(`/app/resources/${relatedResource.id}`)}
+                      >
+                        <div className="flex items-center">
+                          <div className={`p-2 rounded-full ${relatedResource.category === 'guides' ? 'bg-primary/10' : 'bg-crisis-blue/10'} mr-3`}>
+                            {relatedResource.category === 'guides' ? 
+                              <FileText className="h-4 w-4 text-primary" /> : 
+                              <MapPin className="h-4 w-4 text-crisis-blue" />
+                            }
+                          </div>
+                          <span>{relatedResource.title}</span>
                         </div>
-                        <div>
-                          <p className="font-medium">{item.item}</p>
-                          {item.description && (
-                            <p className="text-sm text-muted-foreground">{item.description}</p>
-                          )}
-                        </div>
+                        <ArrowLeft className="h-4 w-4 rotate-180" />
                       </div>
                     ))}
                   </div>
@@ -609,83 +577,115 @@ const ResourceDetail = () => {
               </Card>
             )}
           </TabsContent>
-        )}
 
-        {resource.category === "locations" && (
-          <TabsContent value="details" className="mt-0 space-y-6">
-            {resource.location?.accessibility && (
+          {resource.category === "guides" && (
+            <TabsContent value="checklist" className="mt-2">
+              {resource.checklist && (
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg flex items-center">
+                      <CheckCircle className="h-5 w-5 mr-2" />
+                      Preparation Checklist
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {resource.checklist.map((item, index) => (
+                        <div key={index} className="flex items-start p-3 border-b last:border-0 border-border">
+                          <div className="flex h-5 w-5 items-center justify-center rounded-full border mr-3 mt-0.5">
+                            <CheckCircle className="h-3 w-3 text-muted-foreground" />
+                          </div>
+                          <div>
+                            <p className="font-medium">{item.item}</p>
+                            {item.description && (
+                              <p className="text-sm text-muted-foreground">{item.description}</p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </TabsContent>
+          )}
+
+          {resource.category === "locations" && (
+            <TabsContent value="details" className="mt-2 space-y-6">
+              {resource.location?.accessibility && (
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg flex items-center">
+                      <Users className="h-5 w-5 mr-2" />
+                      Accessibility
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-2">
+                      {resource.location.accessibility.map((item, index) => (
+                        <li key={index} className="flex items-start">
+                          <CheckCircle className="h-4 w-4 mr-2 text-green-500 mt-0.5" />
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+              )}
+
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-lg flex items-center">
-                    <Users className="h-5 w-5 mr-2" />
-                    Accessibility
+                    <Info className="h-5 w-5 mr-2" />
+                    Additional Information
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <ul className="space-y-2">
-                    {resource.location.accessibility.map((item, index) => (
-                      <li key={index} className="flex items-start">
-                        <CheckCircle className="h-4 w-4 mr-2 text-green-500 mt-0.5" />
-                        <span>{item}</span>
-                      </li>
+                  {resource.location?.additionalInfo && (
+                    <p className="mb-4">{resource.location.additionalInfo}</p>
+                  )}
+                  <div className="space-y-2">
+                    {resource.location?.email && (
+                      <div className="flex items-center">
+                        <span className="text-muted-foreground w-20">Email:</span>
+                        <span className="font-medium">{resource.location.email}</span>
+                      </div>
+                    )}
+                    {resource.location?.website && (
+                      <div className="flex items-center">
+                        <span className="text-muted-foreground w-20">Website:</span>
+                        <span className="font-medium">{resource.location.website}</span>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
+
+          <TabsContent value="faqs" className="mt-2">
+            {resource.faqs && (
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg flex items-center">
+                    <HelpCircle className="h-5 w-5 mr-2" />
+                    Frequently Asked Questions
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {resource.faqs.map((faq, index) => (
+                      <div key={index} className="p-3 bg-muted rounded-lg">
+                        <p className="font-medium mb-1">{faq.question}</p>
+                        <p className="text-sm">{faq.answer}</p>
+                      </div>
                     ))}
-                  </ul>
+                  </div>
                 </CardContent>
               </Card>
             )}
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center">
-                  <Info className="h-5 w-5 mr-2" />
-                  Additional Information
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {resource.location?.additionalInfo && (
-                  <p className="mb-4">{resource.location.additionalInfo}</p>
-                )}
-                <div className="space-y-2">
-                  {resource.location?.email && (
-                    <div className="flex items-center">
-                      <span className="text-muted-foreground w-20">Email:</span>
-                      <span className="font-medium">{resource.location.email}</span>
-                    </div>
-                  )}
-                  {resource.location?.website && (
-                    <div className="flex items-center">
-                      <span className="text-muted-foreground w-20">Website:</span>
-                      <span className="font-medium">{resource.location.website}</span>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
           </TabsContent>
-        )}
-
-        <TabsContent value="faqs" className="mt-0">
-          {resource.faqs && (
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center">
-                  <HelpCircle className="h-5 w-5 mr-2" />
-                  Frequently Asked Questions
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {resource.faqs.map((faq, index) => (
-                    <div key={index} className="p-3 bg-muted rounded-lg">
-                      <p className="font-medium mb-1">{faq.question}</p>
-                      <p className="text-sm">{faq.answer}</p>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
