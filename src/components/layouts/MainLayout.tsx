@@ -8,6 +8,7 @@ import { ScrollProvider } from "@/contexts/ScrollContext";
 const MainLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const isChatRoute = location.pathname.includes('/app/chat');
 
   // Simulate authentication check
   useEffect(() => {
@@ -28,7 +29,7 @@ const MainLayout = () => {
         <main className="flex-1 overflow-auto pb-20">
           <Outlet />
         </main>
-        <SOSButton />
+        <SOSButton hidden={isChatRoute} />
         <BottomNavigation />
       </div>
     </ScrollProvider>

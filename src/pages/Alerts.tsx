@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate } from "react-router-dom";
 
-const mockAlerts = [
+const mockAlertsBase = [
   {
     id: 1,
     title: "Flash Flood Warning",
@@ -34,6 +34,9 @@ const mockAlerts = [
     time: "2 hours ago",
     location: "Highway 101, exits 25-30",
   },
+];
+
+const mockAlertsDynamic = [
   {
     id: 4,
     title: "Power Outage",
@@ -52,6 +55,42 @@ const mockAlerts = [
     time: "Yesterday",
     location: "City-wide",
   },
+  {
+    id: 6,
+    title: "Water Main Break",
+    message: "Water service interrupted in eastern suburbs due to main break. Repairs underway.",
+    severity: "medium",
+    category: "utility",
+    time: "4 hours ago",
+    location: "Eastern suburbs",
+  },
+  {
+    id: 7,
+    title: "Gas Leak",
+    message: "Reported gas leak in northern district. Authorities responding. Avoid the area.",
+    severity: "high",
+    category: "utility",
+    time: "30 minutes ago",
+    location: "Northern district",
+  },
+  {
+    id: 8,
+    title: "Wildfire Warning",
+    message: "Wildfire reported in western hills. Evacuation notices may follow. Stay alert.",
+    severity: "critical",
+    category: "weather",
+    time: "15 minutes ago",
+    location: "Western hills region",
+  },
+  {
+    id: 9,
+    title: "School Closure",
+    message: "All public schools closed tomorrow due to severe weather forecast.",
+    severity: "medium",
+    category: "health",
+    time: "2 hours ago",
+    location: "All districts",
+  },
 ];
 
 const Alerts = () => {
@@ -61,16 +100,37 @@ const Alerts = () => {
   const [severityFilter, setSeverityFilter] = useState("all");
   const [activeTab, setActiveTab] = useState("all");
   const navigate = useNavigate();
+  
+  const fetchAlerts = () => {
+    // In a real app, this would be an API call
+    // We'll simulate dynamic alerts by selecting some random alerts to show
+    
+    const randomCount = Math.floor(Math.random() * 3) + 2; // 2-4 alerts
+    const selectedDynamicAlerts = [...mockAlertsDynamic]
+      .sort(() => 0.5 - Math.random())
+      .slice(0, randomCount);
+    
+    // Update time for one random alert to "Just now" to simulate real-time updates
+    if (selectedDynamicAlerts.length > 0) {
+      const randomIndex = Math.floor(Math.random() * selectedDynamicAlerts.length);
+      selectedDynamicAlerts[randomIndex].time = "Just now";
+    }
+    
+    const allAlerts = [...mockAlertsBase, ...selectedDynamicAlerts];
+    setAlerts(allAlerts);
+    setIsLoading(false);
+  };
 
   useEffect(() => {
-    // Simulate API fetch
-    const timer = setTimeout(() => {
-      setAlerts(mockAlerts);
-      setFilteredAlerts(mockAlerts);
-      setIsLoading(false);
-    }, 1000);
-
-    return () => clearTimeout(timer);
+    // Initial fetch
+    fetchAlerts();
+    
+    // Set up interval for real-time updates (every 25 seconds)
+    const interval = setInterval(() => {
+      fetchAlerts();
+    }, 25000);
+    
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -101,7 +161,11 @@ const Alerts = () => {
             <Bell className="h-5 w-5 mr-2" />
             <h1 className="text-xl font-bold">Alerts</h1>
           </div>
-          <div className="flex items-center">
+          <div className="flex items-center gap-2">
+            <span className="text-xs bg-green-100 text-green-800 py-1 px-2 rounded-full flex items-center">
+              <span className="w-1.5 h-1.5 bg-green-500 rounded-full mr-1 animate-pulse"></span>
+              Live
+            </span>
             <Select 
               value={severityFilter}
               onValueChange={setSeverityFilter}
@@ -125,6 +189,7 @@ const Alerts = () => {
           value={activeTab} 
           onValueChange={setActiveTab}
           className="mt-4"
+          defaultValue="all"
         >
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="all">All</TabsTrigger>

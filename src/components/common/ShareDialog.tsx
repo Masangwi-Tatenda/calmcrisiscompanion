@@ -26,9 +26,17 @@ interface ShareDialogProps {
   title: string;
   url: string;
   description?: string;
+  isEmergency?: boolean;
 }
 
-const ShareDialog = ({ open, onOpenChange, title, url, description }: ShareDialogProps) => {
+const ShareDialog = ({ 
+  open, 
+  onOpenChange, 
+  title, 
+  url, 
+  description, 
+  isEmergency = false 
+}: ShareDialogProps) => {
   const [copied, setCopied] = useState(false);
 
   const handleCopyLink = () => {
@@ -60,7 +68,7 @@ const ShareDialog = ({ open, onOpenChange, title, url, description }: ShareDialo
   };
 
   const shareViaEmail = () => {
-    const emailUrl = `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(`${description || title}\n\n${url}`)}`;
+    const emailUrl = `mailto:?subject=${encodeURIComponent(isEmergency ? "EMERGENCY ALERT" : title)}&body=${encodeURIComponent(`${description || title}\n\n${url}`)}`;
     window.open(emailUrl);
     onOpenChange(false);
     toast.success("Opening email client");
@@ -70,9 +78,12 @@ const ShareDialog = ({ open, onOpenChange, title, url, description }: ShareDialo
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Share</DialogTitle>
+          <DialogTitle>{isEmergency ? "Emergency Alert" : "Share"}</DialogTitle>
           <DialogDescription>
-            Share this {description ? "information" : "alert"} with others.
+            {isEmergency 
+              ? "Share your emergency status and location with others."
+              : `Share this ${description ? "information" : "alert"} with others.`
+            }
           </DialogDescription>
         </DialogHeader>
         
