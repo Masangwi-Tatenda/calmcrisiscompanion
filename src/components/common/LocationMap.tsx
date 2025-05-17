@@ -6,12 +6,19 @@ import { Button } from "@/components/ui/button";
 interface LocationMapProps {
   location?: string;
   className?: string;
+  zoom?: number;
+  showDirections?: boolean;
 }
 
-const LocationMap = ({ location, className = "" }: LocationMapProps) => {
+const LocationMap = ({ 
+  location, 
+  className = "", 
+  zoom = 1,
+  showDirections = false 
+}: LocationMapProps) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const [isInteracting, setIsInteracting] = useState(false);
-  const [zoomLevel, setZoomLevel] = useState(1);
+  const [zoomLevel, setZoomLevel] = useState(zoom);
 
   useEffect(() => {
     if (!location) return;
@@ -22,6 +29,11 @@ const LocationMap = ({ location, className = "" }: LocationMapProps) => {
     
     console.log(`Displaying map for location: ${location}`);
   }, [location]);
+
+  // Update zoom level when the zoom prop changes
+  useEffect(() => {
+    setZoomLevel(zoom);
+  }, [zoom]);
 
   const handleZoomIn = () => {
     setZoomLevel(prev => Math.min(prev + 0.2, 2));
@@ -70,6 +82,16 @@ const LocationMap = ({ location, className = "" }: LocationMapProps) => {
             {location}
           </div>
         </div>
+        
+        {/* Directions indicator - only show if showDirections is true */}
+        {showDirections && (
+          <div className="absolute top-2 left-2 bg-background/80 rounded-md shadow-md backdrop-blur-sm px-2 py-1">
+            <div className="flex items-center gap-1">
+              <Navigation className="h-4 w-4 text-primary" />
+              <span className="text-xs font-medium">Directions</span>
+            </div>
+          </div>
+        )}
       </div>
       
       {/* Map controls */}
