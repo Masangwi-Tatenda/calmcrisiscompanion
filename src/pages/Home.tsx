@@ -6,18 +6,19 @@ import QuickAction from "@/components/common/QuickAction";
 import AlertCard from "@/components/common/AlertCard";
 import { toast } from "sonner";
 import LiveWeatherWidget from "@/components/weather/LiveWeatherWidget";
-import ShareDialog from "@/components/common/ShareDialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 const Home = () => {
   const [userName, setUserName] = useState("User");
   const [isLoading, setIsLoading] = useState(true);
   const [recentAlerts, setRecentAlerts] = useState<any[]>([]);
-  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [markSafeOpen, setMarkSafeOpen] = useState(false);
+  const [markedSafe, setMarkedSafe] = useState(false);
   const navigate = useNavigate();
 
   // Mock user location for sharing
   const userLocation = "37.7749,-122.4194"; // San Francisco coordinates
-  const shareUrl = `https://maps.google.com/?q=${userLocation}`;
 
   useEffect(() => {
     // Simulate API fetch for user data
@@ -146,11 +147,29 @@ const Home = () => {
   };
 
   const handleSafetyCheck = () => {
-    setShareDialogOpen(true);
+    setMarkSafeOpen(true);
   };
 
+  const handleMarkSafe = () => {
+    setMarkedSafe(true);
+    setMarkSafeOpen(false);
+    
+    // Notify user's emergency contacts
+    toast.success("Marked Safe", {
+      description: "Your emergency contacts have been notified that you are safe",
+    });
+    
+    // In a real app, this would make an API call to notify emergency contacts
+    console.log("User marked as safe, notifying emergency contacts");
+  }
+
   const quickActions = [
-    { icon: Shield, label: "Mark Safe", color: "text-crisis-green", onClick: handleSafetyCheck },
+    { 
+      icon: Shield, 
+      label: markedSafe ? "Marked Safe" : "Mark Safe", 
+      color: markedSafe ? "text-crisis-green" : "text-crisis-green", 
+      onClick: markedSafe ? undefined : handleSafetyCheck 
+    },
     { icon: MapPin, label: "Nearby", color: "text-crisis-blue", onClick: () => navigate("/app/nearby") },
     { icon: AlertTriangle, label: "Report", color: "text-crisis-red", onClick: () => navigate("/app/report") },
     { icon: FileText, label: "Guides", color: "text-primary", onClick: () => navigate("/app/resources") },
@@ -190,6 +209,7 @@ const Home = () => {
               label={action.label}
               color={action.color}
               onClick={action.onClick}
+              disabled={action.onClick === undefined}
             />
           ))}
         </div>
@@ -244,13 +264,25 @@ const Home = () => {
         )}
       </div>
       
-      <ShareDialog
-        open={shareDialogOpen}
-        onOpenChange={setShareDialogOpen}
-        title="I'm Safe"
-        description="I want to let you know that I'm safe and well."
-        url={shareUrl}
-      />
+      <Dialog open={markSafeOpen} onOpenChange={setMarkSafeOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Mark Yourself as Safe</DialogTitle>
+            <DialogDescription>
+              Let your emergency contacts know that you're safe during this emergency situation.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <p className="mb-4">
+            This will send a notification to all your emergency contacts letting them know you're safe.
+          </p>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMarkSafeOpen(false)}>Cancel</Button>
+            <Button onClick={handleMarkSafe}>Mark As Safe</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

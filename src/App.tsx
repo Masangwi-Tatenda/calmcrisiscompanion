@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 
 // Pages
 import SplashScreen from "./pages/SplashScreen";
@@ -31,33 +32,35 @@ const queryClient = new QueryClient();
 const App = () => (
   <BrowserRouter>
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <Routes>
-          <Route path="/" element={<SplashScreen />} />
-          <Route path="/onboarding" element={<Onboarding />} />
-          <Route path="/signin" element={<SignIn />} />
-          <Route path="/signup" element={<SignUp />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/fill-profile" element={<FillProfile />} />
-          
-          <Route path="/app" element={<MainLayout />}>
-            <Route index element={<Home />} />
-            <Route path="alerts" element={<Alerts />} />
-            <Route path="alerts/:id" element={<AlertDetail />} />
-            <Route path="resources" element={<Resources />} />
-            <Route path="resources/:id" element={<ResourceDetail />} />
-            <Route path="contacts" element={<Contacts />} />
-            <Route path="profile" element={<EnhancedProfile />} />
-            <Route path="chat" element={<Chat />} />
-            <Route path="nearby" element={<Nearby />} />
-            <Route path="report" element={<ReportIncident />} />
-          </Route>
-          
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </TooltipProvider>
+      <ThemeProvider defaultTheme="light">
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <Routes>
+            <Route path="/" element={<SplashScreen />} />
+            <Route path="/onboarding" element={<Onboarding />} />
+            <Route path="/signin" element={<SignIn />} />
+            <Route path="/signup" element={<SignUp />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/fill-profile" element={<FillProfile />} />
+            
+            <Route path="/app" element={<MainLayout />}>
+              <Route index element={<Home />} />
+              <Route path="alerts" element={<Alerts />} />
+              <Route path="alerts/:id" element={<AlertDetail />} />
+              <Route path="resources" element={<Resources />} />
+              <Route path="resources/:id" element={<ResourceDetail />} />
+              <Route path="contacts" element={<Contacts />} />
+              <Route path="profile" element={<EnhancedProfile />} />
+              <Route path="chat" element={<Chat />} />
+              <Route path="nearby" element={<Nearby />} />
+              <Route path="report" element={<ReportIncident />} />
+            </Route>
+            
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </TooltipProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   </BrowserRouter>
 );

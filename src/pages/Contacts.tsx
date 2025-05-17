@@ -6,6 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ContactCard from "@/components/common/ContactCard";
 import { toast } from "@/components/ui/use-toast";
+import { Dialog } from "@/components/ui/dialog";
+import AddContactForm from "@/components/contacts/AddContactForm";
+import { useNavigate } from "react-router-dom";
 
 const mockContacts = [
   {
@@ -64,12 +67,28 @@ const Contacts = () => {
   const [filteredContacts, setFilteredContacts] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("all");
+  const [isAddContactOpen, setIsAddContactOpen] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Simulate API fetch
     const timer = setTimeout(() => {
-      setContacts(mockContacts);
-      setFilteredContacts(mockContacts);
+      // Try to get contacts from localStorage first
+      const savedContacts = localStorage.getItem("contacts");
+      if (savedContacts) {
+        try {
+          const parsedContacts = JSON.parse(savedContacts);
+          setContacts(parsedContacts);
+          setFilteredContacts(parsedContacts);
+        } catch (e) {
+          console.error("Error parsing saved contacts:", e);
+          setContacts(mockContacts);
+          setFilteredContacts(mockContacts);
+        }
+      } else {
+        setContacts(mockContacts);
+        setFilteredContacts(mockContacts);
+      }
       setIsLoading(false);
     }, 1000);
 
@@ -102,7 +121,10 @@ const Contacts = () => {
       title: `Calling ${contact.name}`,
       description: `Dialing ${contact.phone}...`,
     });
-    // Would initiate phone call here
+    
+    // In a real mobile app, this would use a native API to initiate a call
+    // For web, we'll use tel: protocol
+    window.location.href = `tel:${contact.phone.replace(/\D/g, '')}`;
   };
 
   const handleMessage = (contact: any) => {
@@ -110,15 +132,42 @@ const Contacts = () => {
       title: `Message ${contact.name}`,
       description: `Opening messaging for ${contact.phone}...`,
     });
-    // Would open messaging here
+    
+    // For personal contacts, navigate to chat
+    if (contact.type === "personal") {
+      navigate(`/app/chat?contact=${contact.name}&phone=${contact.phone}`);
+    } else {
+      // For emergency/service contacts, use sms: protocol
+      window.location.href = `sms:${contact.phone.replace(/\D/g, '')}`;
+    }
   };
 
   const handleAddContact = () => {
-    toast({
-      title: "Add Contact",
-      description: "This feature will be available soon.",
-    });
-    // Would open add contact modal
+    setIsAddContactOpen(true);
+  };
+
+  const addNewContact = (newContact: any) => {
+    const iconMap: Record<string, any> = {
+      emergency: Shield,
+      personal: Users,
+      service: Building,
+    };
+    
+    const contact = {
+      ...newContact,
+      id: contacts.length + 1,
+      icon: iconMap[newContact.type] || Users,
+    };
+    
+    const updatedContacts = [...contacts, contact];
+    setContacts(updatedContacts);
+    
+    // Save to localStorage
+    try {
+      localStorage.setItem("contacts", JSON.stringify(updatedContacts));
+    } catch (e) {
+      console.error("Error saving contacts to localStorage:", e);
+    }
   };
 
   return (
@@ -220,6 +269,13 @@ const Contacts = () => {
           </div>
         )}
       </div>
+
+      <Dialog open={isAddContactOpen} onOpenChange={setIsAddContactOpen}>
+        <AddContactForm 
+          onClose={() => setIsAddContactOpen(false)} 
+          onAddContact={addNewContact} 
+        />
+      </Dialog>
     </div>
   );
 };

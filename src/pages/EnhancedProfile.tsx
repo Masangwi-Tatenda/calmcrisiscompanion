@@ -1,22 +1,24 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
   User, Shield, Settings, ChevronRight, LogOut, MapPin, Phone, 
   Droplet, Heart, Bell, Mail, Calendar, FileText, Bookmark, 
-  Clock, Languages, Lock, AlertCircle, Edit2
+  Clock, Languages, Lock, AlertCircle, Edit2, Moon, Sun
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const EnhancedProfile = () => {
   const navigate = useNavigate();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [activeTab, setActiveTab] = useState("personal");
+  const { theme, setTheme } = useTheme();
   
   const [notificationSettings, setNotificationSettings] = useState({
     emergencyAlerts: true,
@@ -39,9 +41,31 @@ const EnhancedProfile = () => {
       { name: "Mike Smith", relationship: "Brother", phone: "(555) 234-5678" }
     ],
     language: "English",
-    theme: "Light",
+    theme: theme,
     notifications: true,
   });
+
+  // Load saved profile from localStorage if available
+  useEffect(() => {
+    const savedProfile = localStorage.getItem("userProfile");
+    if (savedProfile) {
+      try {
+        const parsed = JSON.parse(savedProfile);
+        setUserProfile(parsed);
+      } catch (e) {
+        console.error("Failed to parse saved user profile");
+      }
+    }
+    
+    const savedNotificationSettings = localStorage.getItem("notificationSettings");
+    if (savedNotificationSettings) {
+      try {
+        setNotificationSettings(JSON.parse(savedNotificationSettings));
+      } catch (e) {
+        console.error("Failed to parse saved notification settings");
+      }
+    }
+  }, []);
 
   const handleSignOut = () => {
     localStorage.removeItem("isAuthenticated");
@@ -54,13 +78,41 @@ const EnhancedProfile = () => {
   };
 
   const handleToggleNotification = (key: string) => {
-    setNotificationSettings(prev => ({
-      ...prev,
-      [key]: !prev[key as keyof typeof notificationSettings],
-    }));
+    const updated = {
+      ...notificationSettings,
+      [key]: !notificationSettings[key as keyof typeof notificationSettings],
+    };
+    
+    setNotificationSettings(updated);
+    localStorage.setItem("notificationSettings", JSON.stringify(updated));
+    
+    toast({
+      title: "Settings Updated",
+      description: `${key} notifications ${updated[key as keyof typeof updated] ? 'enabled' : 'disabled'}`,
+    });
+  };
+
+  const handleThemeChange = (newTheme: "light" | "dark" | "system") => {
+    setTheme(newTheme);
+    
+    const updatedProfile = {
+      ...userProfile,
+      theme: newTheme
+    };
+    
+    setUserProfile(updatedProfile);
+    localStorage.setItem("userProfile", JSON.stringify(updatedProfile));
+    
+    toast({
+      title: "Theme Updated",
+      description: `App theme changed to ${newTheme} mode`,
+    });
   };
 
   const handleEditProfile = () => {
+    // Save profile to localStorage
+    localStorage.setItem("userProfile", JSON.stringify(userProfile));
+    
     toast({
       title: "Profile Updated",
       description: "Your profile information has been updated successfully",
@@ -308,15 +360,38 @@ const EnhancedProfile = () => {
                 </div>
                 <div>
                   <label className="text-sm font-medium">Theme</label>
-                  <select 
-                    className="w-full p-2 border rounded mt-1"
-                    value={userProfile.theme}
-                    onChange={(e) => setUserProfile({...userProfile, theme: e.target.value})}
-                  >
-                    <option value="Light">Light</option>
-                    <option value="Dark">Dark</option>
-                    <option value="System">System</option>
-                  </select>
+                  <div className="mt-2 flex flex-col space-y-2">
+                    <div 
+                      className={`flex items-center justify-between p-3 rounded-md ${theme === 'light' ? 'bg-primary/10 border border-primary/30' : 'bg-background border border-border'}`}
+                      onClick={() => handleThemeChange('light')}
+                    >
+                      <div className="flex items-center">
+                        <Sun className="h-5 w-5 mr-2 text-amber-500" />
+                        <span>Light</span>
+                      </div>
+                      {theme === 'light' && <div className="w-3 h-3 bg-primary rounded-full"></div>}
+                    </div>
+                    <div 
+                      className={`flex items-center justify-between p-3 rounded-md ${theme === 'dark' ? 'bg-primary/10 border border-primary/30' : 'bg-background border border-border'}`}
+                      onClick={() => handleThemeChange('dark')}
+                    >
+                      <div className="flex items-center">
+                        <Moon className="h-5 w-5 mr-2 text-indigo-400" />
+                        <span>Dark</span>
+                      </div>
+                      {theme === 'dark' && <div className="w-3 h-3 bg-primary rounded-full"></div>}
+                    </div>
+                    <div 
+                      className={`flex items-center justify-between p-3 rounded-md ${theme === 'system' ? 'bg-primary/10 border border-primary/30' : 'bg-background border border-border'}`}
+                      onClick={() => handleThemeChange('system')}
+                    >
+                      <div className="flex items-center">
+                        <Settings className="h-5 w-5 mr-2 text-gray-500" />
+                        <span>System</span>
+                      </div>
+                      {theme === 'system' && <div className="w-3 h-3 bg-primary rounded-full"></div>}
+                    </div>
+                  </div>
                 </div>
                 <div className="flex items-center justify-between">
                   <label className="text-sm font-medium">Notifications</label>

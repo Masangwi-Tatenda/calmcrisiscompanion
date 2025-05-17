@@ -12,7 +12,6 @@ interface SOSButtonProps {
 const SOSButton = ({ hidden = false }: SOSButtonProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isSOSActive, setIsSOSActive] = useState(false);
-  const [shareOpen, setShareOpen] = useState(false);
   
   // Mock user location - in a real app we would use geolocation API
   const userLocation = "37.7749,-122.4194"; // San Francisco coordinates
@@ -21,7 +20,6 @@ const SOSButton = ({ hidden = false }: SOSButtonProps) => {
   const handleSOS = () => {
     setIsSOSActive(true);
     setIsOpen(false);
-    setShareOpen(true);
     
     // Log SOS activation
     console.log("SOS activated");
@@ -46,49 +44,20 @@ const SOSButton = ({ hidden = false }: SOSButtonProps) => {
     <>
       {isSOSActive ? (
         <button
-          className="sos-button active"
+          className="sos-button active fixed bottom-24 right-6 z-50 p-4 rounded-full bg-crisis-red shadow-lg flex items-center justify-center animate-pulse"
           onClick={handleCancelSOS}
           aria-label="Cancel Emergency SOS"
         >
           <AlertOctagon size={24} className="text-white" />
-          <span className="sos-pulse"></span>
-          <style jsx>{`
-            .sos-button.active {
-              background-color: #ef4444;
-              animation: pulse 1.5s infinite;
-            }
-            .sos-pulse {
-              position: absolute;
-              width: 100%;
-              height: 100%;
-              border-radius: 50%;
-              background-color: rgba(239, 68, 68, 0.6);
-              z-index: -1;
-              animation: pulse 1.5s infinite;
-            }
-            @keyframes pulse {
-              0% {
-                transform: scale(1);
-                opacity: 0.7;
-              }
-              70% {
-                transform: scale(1.3);
-                opacity: 0;
-              }
-              100% {
-                transform: scale(1);
-                opacity: 0;
-              }
-            }
-          `}</style>
+          <span className="absolute w-full h-full rounded-full bg-crisis-red/60 z-[-1] animate-ping"></span>
         </button>
       ) : (
         <button
-          className="sos-button"
+          className="fixed bottom-24 right-6 z-50 p-4 bg-crisis-red rounded-full shadow-lg"
           onClick={() => setIsOpen(true)}
           aria-label="Emergency SOS"
         >
-          <AlertOctagon size={24} className="animate-pulse" />
+          <AlertOctagon size={24} className="animate-pulse text-white" />
         </button>
       )}
 
@@ -114,15 +83,6 @@ const SOSButton = ({ hidden = false }: SOSButtonProps) => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      <ShareDialog
-        open={shareOpen}
-        onOpenChange={setShareOpen}
-        title="EMERGENCY: I need help!"
-        description="I've activated an emergency alert. Here is my current location:"
-        url={shareUrl}
-        isEmergency={true}
-      />
     </>
   );
 };
