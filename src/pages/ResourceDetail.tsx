@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { 
@@ -638,7 +637,7 @@ const ResourceDetail = () => {
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg flex items-center">
-                  <InfoIcon className="h-5 w-5 mr-2" />
+                  <Info className="h-5 w-5 mr-2" />
                   Additional Information
                 </CardTitle>
               </CardHeader>
