@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { 
@@ -405,7 +406,7 @@ const ResourceDetail = () => {
           <span>Last updated: {resource.lastUpdated}</span>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <Tabs defaultValue={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             {resource.category === "guides" && <TabsTrigger value="checklist">Checklist</TabsTrigger>}
