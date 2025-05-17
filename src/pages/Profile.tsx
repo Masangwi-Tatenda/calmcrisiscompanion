@@ -6,9 +6,11 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const Profile = () => {
   const navigate = useNavigate();
+  const { theme, setTheme } = useTheme();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   
   const [notificationSettings, setNotificationSettings] = useState({
@@ -87,7 +89,7 @@ const Profile = () => {
       label: "Personal Information",
       description: "Name, address, and contact details",
       onClick: () => {
-        navigate("/app/profile/edit");
+        navigate("/app/profile/personal");
       },
     },
     {
@@ -95,7 +97,7 @@ const Profile = () => {
       label: "Emergency Contacts",
       description: "Manage your emergency contacts",
       onClick: () => {
-        navigate("/app/profile/contacts");
+        navigate("/app/profile/emergency");
       },
     },
     {
@@ -162,7 +164,7 @@ const Profile = () => {
         {profileSettings.map((setting, index) => (
           <button
             key={index}
-            className="w-full flex items-center justify-between p-4 bg-white rounded-lg shadow-subtle hover:shadow-card transition-shadow"
+            className="w-full flex items-center justify-between p-4 bg-card rounded-lg shadow-subtle hover:shadow-card transition-shadow"
             onClick={setting.onClick}
           >
             <div className="flex items-center">
@@ -181,7 +183,7 @@ const Profile = () => {
         ))}
 
         <button
-          className="w-full flex items-center p-4 bg-white rounded-lg shadow-subtle hover:shadow-card transition-shadow text-crisis-red mt-8"
+          className="w-full flex items-center p-4 bg-card rounded-lg shadow-subtle hover:shadow-card transition-shadow text-crisis-red mt-8"
           onClick={() => handleSignOut()}
         >
           <LogOut className="h-5 w-5 mr-3" />

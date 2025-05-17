@@ -21,6 +21,11 @@ import Resources from "./pages/Resources";
 import ResourceDetail from "./pages/ResourceDetail";
 import Contacts from "./pages/Contacts";
 import Profile from "./pages/Profile";
+import PersonalInfo from "./pages/profile/PersonalInfo"; 
+import EmergencyContacts from "./pages/profile/EmergencyContacts";
+import MedicalInfo from "./pages/profile/MedicalInfo";
+import SavedResources from "./pages/profile/SavedResources";
+import Settings from "./pages/Settings";
 import Chat from "./pages/Chat";
 import NotFound from "./pages/NotFound";
 import EnhancedProfile from "./pages/EnhancedProfile";
@@ -50,8 +55,13 @@ const App = () => (
               <Route path="alerts/:id" element={<AlertDetail />} />
               <Route path="resources" element={<Resources />} />
               <Route path="resources/:id" element={<ResourceDetail />} />
+              <Route path="resources/saved" element={<SavedResources />} />
               <Route path="contacts" element={<Contacts />} />
-              <Route path="profile" element={<EnhancedProfile />} />
+              <Route path="profile" element={<Profile />} />
+              <Route path="profile/personal" element={<PersonalInfo />} />
+              <Route path="profile/emergency" element={<EmergencyContacts />} />
+              <Route path="profile/medical" element={<MedicalInfo />} />
+              <Route path="settings" element={<Settings />} />
               <Route path="chat" element={<Chat />} />
               <Route path="nearby" element={<Nearby />} />
               <Route path="report" element={<ReportIncident />} />
