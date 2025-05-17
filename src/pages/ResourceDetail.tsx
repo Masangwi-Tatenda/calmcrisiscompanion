@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { 
@@ -10,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import LocationMap from "@/components/common/LocationMap";
+import ShareDialog from "@/components/common/ShareDialog";
 
 interface Resource {
   id: number;
@@ -247,6 +248,7 @@ const ResourceDetail = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
+  const [showShareDialog, setShowShareDialog] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -263,8 +265,7 @@ const ResourceDetail = () => {
   }, [id]);
 
   const handleShareResource = () => {
-    // Share functionality would go here
-    console.log("Sharing resource:", resource?.title);
+    setShowShareDialog(true);
   };
 
   const handleToggleBookmark = () => {
@@ -280,11 +281,14 @@ const ResourceDetail = () => {
   const handleOpenWebsite = (website: string) => {
     // In a real app, this would open the website
     console.log("Opening website:", website);
+    window.open(`https://${website}`, "_blank");
   };
 
   const handleOpenMap = (address: string) => {
     // In a real app, this would open maps
     console.log("Opening directions to:", address);
+    const encodedAddress = encodeURIComponent(address);
+    window.open(`https://maps.google.com?q=${encodedAddress}`, "_blank");
   };
 
   if (isLoading) {
@@ -354,6 +358,7 @@ const ResourceDetail = () => {
   }
 
   const Icon = resource.icon || FileText;
+  const shareUrl = window.location.href;
 
   return (
     <div className="page-container pb-24 overflow-y-auto">
@@ -406,7 +411,7 @@ const ResourceDetail = () => {
           <span>Last updated: {resource.lastUpdated}</span>
         </div>
 
-        <Tabs defaultValue={activeTab} onValueChange={setActiveTab}>
+        <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             {resource.category === "guides" && <TabsTrigger value="checklist">Checklist</TabsTrigger>}
@@ -445,6 +450,8 @@ const ResourceDetail = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
+                  <LocationMap location={resource.location.address} className="mb-4" />
+                  
                   <div className="space-y-3 mb-4">
                     <div className="flex items-start">
                       <MapPin className="h-4 w-4 mt-0.5 mr-2 flex-shrink-0 text-muted-foreground" />
@@ -534,7 +541,12 @@ const ResourceDetail = () => {
                         {link.description && (
                           <p className="text-sm text-muted-foreground mb-2">{link.description}</p>
                         )}
-                        <Button variant="secondary" size="sm" className="w-full">
+                        <Button 
+                          variant="secondary" 
+                          size="sm" 
+                          className="w-full"
+                          onClick={() => window.open(link.url, "_blank")}
+                        >
                           <ExternalLink className="h-3 w-3 mr-2" />
                           Open Resource
                         </Button>
@@ -688,6 +700,14 @@ const ResourceDetail = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      <ShareDialog 
+        open={showShareDialog}
+        onOpenChange={setShowShareDialog}
+        title={resource.title}
+        description={resource.description}
+        url={shareUrl}
+      />
     </div>
   );
 };

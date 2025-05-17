@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { 
@@ -11,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import LocationMap from "@/components/common/LocationMap";
+import ShareDialog from "@/components/common/ShareDialog";
 
 interface Alert {
   id: number;
@@ -207,6 +207,7 @@ const AlertDetail = () => {
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   const [liveUpdates, setLiveUpdates] = useState<{ time: string; content: string }[]>([]);
+  const [showShareDialog, setShowShareDialog] = useState(false);
 
   useEffect(() => {
     // Simulate API fetch
@@ -265,8 +266,7 @@ const AlertDetail = () => {
   };
 
   const handleShareAlert = () => {
-    // Share functionality would go here
-    console.log("Sharing alert:", alert?.title);
+    setShowShareDialog(true);
   };
 
   if (isLoading) {
@@ -328,6 +328,7 @@ const AlertDetail = () => {
   }
 
   const Icon = alert.icon || Info;
+  const shareUrl = window.location.href;
 
   return (
     <div className="page-container pb-24 overflow-y-auto">
@@ -353,7 +354,7 @@ const AlertDetail = () => {
       <div className={`p-4 rounded-lg mb-6 ${getSeverityColor(alert.severity)} bg-opacity-10 border border-opacity-30 ${getSeverityColor(alert.severity).replace('bg-', 'border-')}`}>
         <div className="flex items-center mb-2">
           <div className={`p-2 rounded-full ${getSeverityColor(alert.severity)} bg-opacity-20 mr-3`}>
-            <Icon className="h-6 w-6" />
+            <Icon className={`h-6 w-6 ${alert.severity === "low" ? "text-yellow-600" : "text-white"}`} />
           </div>
           <div>
             <h1 className="text-xl font-bold">{alert.title}</h1>
@@ -540,6 +541,14 @@ const AlertDetail = () => {
           </div>
         </div>
       </div>
+
+      <ShareDialog 
+        open={showShareDialog}
+        onOpenChange={setShowShareDialog}
+        title={alert.title}
+        description={alert.message}
+        url={shareUrl}
+      />
     </div>
   );
 };
