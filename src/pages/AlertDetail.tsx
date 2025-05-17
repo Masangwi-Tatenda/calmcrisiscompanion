@@ -3,13 +3,14 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { 
   ArrowLeft, CloudRain, CloudLightning, AlertTriangle, Info, 
-  MapPin, Clock, Share2, Phone, Shield, Info as InfoIcon, 
+  MapPin, Clock, Share2, Phone, Shield, 
   AlertOctagon, FileText, Compass, Users, MessageCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import LocationMap from "@/components/common/LocationMap";
 
 interface Alert {
   id: number;
@@ -205,18 +206,53 @@ const AlertDetail = () => {
   const [alert, setAlert] = useState<Alert | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
+  const [liveUpdates, setLiveUpdates] = useState<{ time: string; content: string }[]>([]);
 
   useEffect(() => {
     // Simulate API fetch
     const timer = setTimeout(() => {
       if (id && mockAlertDetails[id]) {
         setAlert(mockAlertDetails[id]);
+        
+        // Initialize live updates with any existing updates from the alert
+        if (mockAlertDetails[id].updates) {
+          setLiveUpdates(mockAlertDetails[id].updates || []);
+        }
       }
       setIsLoading(false);
     }, 800);
 
     return () => clearTimeout(timer);
   }, [id]);
+
+  // Simulate real-time updates
+  useEffect(() => {
+    if (!alert) return;
+    
+    // Simulate getting real-time updates
+    const updateInterval = setInterval(() => {
+      const randomUpdateMessages = [
+        "Emergency crews responding to affected areas",
+        "Road closures expanded to include additional streets",
+        "Shelter capacity increased to accommodate more residents",
+        "Weather conditions show signs of improvement",
+        "Additional resources deployed to critical zones"
+      ];
+      
+      const shouldAddUpdate = Math.random() > 0.7; // 30% chance of new update
+      
+      if (shouldAddUpdate) {
+        const newUpdate = {
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          content: randomUpdateMessages[Math.floor(Math.random() * randomUpdateMessages.length)]
+        };
+        
+        setLiveUpdates(prev => [newUpdate, ...prev]);
+      }
+    }, 15000); // Check for potential updates every 15 seconds
+    
+    return () => clearInterval(updateInterval);
+  }, [alert]);
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
@@ -347,6 +383,20 @@ const AlertDetail = () => {
         </div>
       </div>
 
+      {alert.location && (
+        <Card className="mb-6">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg flex items-center">
+              <MapPin className="h-5 w-5 mr-2" />
+              Location
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <LocationMap location={alert.location} />
+          </CardContent>
+        </Card>
+      )}
+
       <div className="space-y-6">
         {alert.affected && (
           <Card>
@@ -404,17 +454,21 @@ const AlertDetail = () => {
           <CardHeader className="pb-2">
             <CardTitle className="text-lg flex items-center">
               <Clock className="h-5 w-5 mr-2" />
-              Latest Updates
+              Live Updates
+              <span className="ml-2 text-xs px-2 py-1 bg-green-100 text-green-800 rounded-full animate-pulse">Live</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {alert.updates?.map((update, index) => (
-                <div key={index} className="border-l-2 border-primary pl-3 py-1">
+              {liveUpdates.map((update, index) => (
+                <div key={`${update.time}-${index}`} className="border-l-2 border-primary pl-3 py-1">
                   <p className="text-sm">{update.content}</p>
                   <span className="text-xs text-muted-foreground">{update.time}</span>
                 </div>
               ))}
+              {liveUpdates.length === 0 && (
+                <p className="text-sm text-muted-foreground">No updates available yet.</p>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -476,7 +530,7 @@ const AlertDetail = () => {
         <div className="bg-muted p-4 rounded-lg">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
-              <InfoIcon className="h-4 w-4 mr-2 text-muted-foreground" />
+              <Info className="h-4 w-4 mr-2 text-muted-foreground" />
               <span className="text-sm text-muted-foreground">Source: {alert.source}</span>
             </div>
             <Button variant="ghost" size="sm">

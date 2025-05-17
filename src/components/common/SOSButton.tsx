@@ -3,13 +3,19 @@ import { AlertOctagon } from "lucide-react";
 import { useState } from "react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
-const SOSButton = () => {
+interface SOSButtonProps {
+  hidden?: boolean;
+}
+
+const SOSButton = ({ hidden = false }: SOSButtonProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const handleSOS = () => {
     // Would handle the emergency actions here
     console.log("SOS activated");
   };
+
+  if (hidden) return null;
 
   return (
     <>

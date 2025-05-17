@@ -1,9 +1,9 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { User, Shield, Settings, ChevronRight, LogOut, MapPin, Phone, Droplet, Heart, Bell } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 
@@ -18,6 +18,19 @@ const Profile = () => {
     locationBasedAlerts: true,
   });
 
+  const [userProfile, setUserProfile] = useState({
+    name: "John Doe",
+    location: "New York, NY",
+    phone: "(555) 123-4567",
+    email: "john.doe@example.com",
+    bloodType: "O+",
+    allergies: ["Penicillin", "Peanuts"],
+    emergencyContacts: [
+      { name: "Jane Doe", relationship: "Spouse", phone: "(555) 987-6543" },
+      { name: "Mike Smith", relationship: "Brother", phone: "(555) 234-5678" }
+    ],
+  });
+
   const handleSignOut = () => {
     localStorage.removeItem("isAuthenticated");
     localStorage.removeItem("hasSeenOnboarding");
@@ -29,36 +42,77 @@ const Profile = () => {
   };
 
   const handleToggleNotification = (key: string) => {
-    setNotificationSettings(prev => ({
-      ...prev,
-      [key]: !prev[key as keyof typeof notificationSettings],
-    }));
+    setNotificationSettings(prev => {
+      const updated = {
+        ...prev,
+        [key]: !prev[key as keyof typeof notificationSettings],
+      };
+      
+      // Save to mock storage
+      localStorage.setItem("notificationSettings", JSON.stringify(updated));
+      
+      toast({
+        title: "Settings Updated",
+        description: `${key} notifications ${updated[key as keyof typeof updated] ? 'enabled' : 'disabled'}`,
+      });
+      
+      return updated;
+    });
   };
+  
+  // Load saved settings on mount
+  useEffect(() => {
+    const savedSettings = localStorage.getItem("notificationSettings");
+    if (savedSettings) {
+      try {
+        setNotificationSettings(JSON.parse(savedSettings));
+      } catch (e) {
+        console.error("Failed to parse saved notification settings");
+      }
+    }
+    
+    const savedProfile = localStorage.getItem("userProfile");
+    if (savedProfile) {
+      try {
+        setUserProfile(JSON.parse(savedProfile));
+      } catch (e) {
+        console.error("Failed to parse saved user profile");
+      }
+    }
+  }, []);
 
   const profileSettings = [
     {
       icon: User,
       label: "Personal Information",
       description: "Name, address, and contact details",
-      onClick: () => {},
+      onClick: () => {
+        navigate("/app/profile/edit");
+      },
     },
     {
       icon: Shield,
       label: "Emergency Contacts",
       description: "Manage your emergency contacts",
-      onClick: () => {},
+      onClick: () => {
+        navigate("/app/profile/contacts");
+      },
     },
     {
       icon: Droplet,
       label: "Medical Information",
       description: "Blood type, allergies, and conditions",
-      onClick: () => {},
+      onClick: () => {
+        navigate("/app/profile/medical");
+      },
     },
     {
       icon: Heart,
       label: "Saved Resources",
       description: "View your bookmarked resources",
-      onClick: () => {},
+      onClick: () => {
+        navigate("/app/resources/saved");
+      },
     },
     {
       icon: Bell,
@@ -70,9 +124,22 @@ const Profile = () => {
       icon: Settings,
       label: "App Settings",
       description: "Language, theme, and accessibility",
-      onClick: () => {},
+      onClick: () => {
+        navigate("/app/settings");
+      },
     },
   ];
+
+  const saveNotificationSettings = () => {
+    localStorage.setItem("notificationSettings", JSON.stringify(notificationSettings));
+    
+    toast({
+      title: "Notification settings saved",
+      description: "Your notification preferences have been updated",
+    });
+    
+    setIsDialogOpen(false);
+  };
 
   return (
     <div className="page-container">
@@ -80,14 +147,14 @@ const Profile = () => {
         <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center mb-4">
           <User className="h-10 w-10 text-primary" />
         </div>
-        <h1 className="text-xl font-bold">John Doe</h1>
+        <h1 className="text-xl font-bold">{userProfile.name}</h1>
         <div className="flex items-center mt-1 text-sm text-muted-foreground">
           <MapPin className="h-3 w-3 mr-1" />
-          <span>New York, NY</span>
+          <span>{userProfile.location}</span>
         </div>
         <div className="flex items-center mt-1 text-sm text-muted-foreground">
           <Phone className="h-3 w-3 mr-1" />
-          <span>(555) 123-4567</span>
+          <span>{userProfile.phone}</span>
         </div>
       </div>
 
@@ -186,7 +253,7 @@ const Profile = () => {
           </div>
           
           <DialogFooter>
-            <Button onClick={() => setIsDialogOpen(false)}>
+            <Button onClick={saveNotificationSettings}>
               Save Changes
             </Button>
           </DialogFooter>
