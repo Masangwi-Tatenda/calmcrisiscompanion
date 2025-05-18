@@ -15,7 +15,7 @@ const mockContacts = [
     id: 1,
     name: "Emergency Services",
     phone: "911",
-    type: "emergency",
+    type: "emergency" as const,
     icon: Shield,
     isFavorite: true,
   },
@@ -23,7 +23,7 @@ const mockContacts = [
     id: 2,
     name: "Poison Control",
     phone: "1-800-222-1222",
-    type: "emergency",
+    type: "emergency" as const,
     icon: Shield,
     isFavorite: false,
   },
@@ -31,7 +31,7 @@ const mockContacts = [
     id: 3,
     name: "John Smith",
     phone: "(555) 123-4567",
-    type: "personal",
+    type: "personal" as const,
     icon: Users,
     isFavorite: true,
   },
@@ -39,7 +39,7 @@ const mockContacts = [
     id: 4,
     name: "Sarah Johnson",
     phone: "(555) 987-6543",
-    type: "personal",
+    type: "personal" as const,
     icon: Users,
     isFavorite: false,
   },
@@ -47,7 +47,7 @@ const mockContacts = [
     id: 5,
     name: "Local Fire Department",
     phone: "(555) 789-4561",
-    type: "service",
+    type: "service" as const,
     icon: Building,
     isFavorite: false,
   },
@@ -55,7 +55,7 @@ const mockContacts = [
     id: 6,
     name: "Medical Clinic",
     phone: "(555) 234-5678",
-    type: "service",
+    type: "service" as const,
     icon: Heart,
     isFavorite: true,
   },
@@ -63,8 +63,8 @@ const mockContacts = [
 
 const Contacts = () => {
   const [isLoading, setIsLoading] = useState(true);
-  const [contacts, setContacts] = useState<any[]>([]);
-  const [filteredContacts, setFilteredContacts] = useState<any[]>([]);
+  const [contacts, setContacts] = useState<Array<typeof mockContacts[0]>>([]);
+  const [filteredContacts, setFilteredContacts] = useState<Array<typeof mockContacts[0]>>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   const [isAddContactOpen, setIsAddContactOpen] = useState(false);
@@ -116,7 +116,7 @@ const Contacts = () => {
     setFilteredContacts(result);
   }, [contacts, activeTab, searchQuery]);
 
-  const handleCall = (contact: any) => {
+  const handleCall = (contact: typeof mockContacts[0]) => {
     toast({
       title: `Calling ${contact.name}`,
       description: `Dialing ${contact.phone}...`,
@@ -127,7 +127,7 @@ const Contacts = () => {
     window.location.href = `tel:${contact.phone.replace(/\D/g, '')}`;
   };
 
-  const handleMessage = (contact: any) => {
+  const handleMessage = (contact: typeof mockContacts[0]) => {
     toast({
       title: `Message ${contact.name}`,
       description: `Opening messaging for ${contact.phone}...`,
@@ -197,6 +197,7 @@ const Contacts = () => {
         <Tabs 
           value={activeTab} 
           onValueChange={setActiveTab}
+          defaultValue="all"
         >
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="all">All</TabsTrigger>
