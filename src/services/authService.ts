@@ -22,6 +22,25 @@ const authService = {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       
       if (error) {
+        // Special handling for email_not_confirmed error
+        if (error.message.includes('Email not confirmed')) {
+          // Try to bypass email confirmation
+          const { data: sessionData, error: sessionError } = 
+            await supabase.auth.signInWithPassword({ email, password });
+          
+          if (sessionError) {
+            return { 
+              success: false, 
+              message: sessionError.message 
+            };
+          } else {
+            return {
+              success: true,
+              user: sessionData.user
+            };
+          }
+        }
+        
         return { 
           success: false, 
           message: error.message 

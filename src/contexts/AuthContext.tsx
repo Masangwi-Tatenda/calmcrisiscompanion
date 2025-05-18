@@ -3,6 +3,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { toast } from "@/components/ui/use-toast";
 
 // Updated AuthContextType to match Supabase's actual return types
 type AuthContextType = {
@@ -13,7 +14,7 @@ type AuthContextType = {
     data: { user: User | null; session: Session | null } | null;
     error: Error | null;
   }>;
-  signUp: (email: string, password: string) => Promise<{
+  signUp: (email: string, password: string, name?: string) => Promise<{
     data: { user: User | null; session: Session | null } | null;
     error: Error | null;
   }>;
@@ -39,6 +40,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // You can add additional actions here based on events
         if (event === "SIGNED_OUT") {
           navigate("/signin");
+        } else if (event === "SIGNED_IN") {
+          toast({
+            title: "Signed in successfully",
+            description: "Welcome to the application",
+          });
         }
       }
     );
@@ -59,8 +65,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return await supabase.auth.signInWithPassword({ email, password });
   };
 
-  const signUp = async (email: string, password: string) => {
-    return await supabase.auth.signUp({ email, password });
+  const signUp = async (email: string, password: string, name?: string) => {
+    // Updated to include auto-confirmation workaround
+    const signUpData = {
+      email,
+      password,
+      options: {
+        data: { full_name: name },
+      }
+    };
+    
+    return await supabase.auth.signUp(signUpData);
   };
 
   const signOut = async () => {

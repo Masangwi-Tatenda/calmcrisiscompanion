@@ -41,7 +41,7 @@ const SignUp = () => {
     setIsLoading(true);
     
     try {
-      const { data, error } = await signUp(email, password);
+      const { data, error } = await signUp(email, password, name);
       
       if (error) {
         toast({
@@ -52,9 +52,12 @@ const SignUp = () => {
       } else if (data) {
         toast({
           title: "Account created",
-          description: "Your account has been created successfully",
+          description: "Your account has been created successfully. You can now sign in.",
         });
-        navigate("/fill-profile");
+        // Wait briefly before redirecting to sign-in
+        setTimeout(() => {
+          navigate("/signin");
+        }, 1500);
       }
     } catch (error: any) {
       toast({

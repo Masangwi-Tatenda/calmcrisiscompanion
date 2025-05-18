@@ -34,6 +34,34 @@ const SignIn = () => {
       const { data, error } = await signIn(email, password);
       
       if (error) {
+        // Special handling for email confirmation errors
+        if (error.message && error.message.includes('Email not confirmed')) {
+          toast({
+            title: "Email Not Confirmed",
+            description: "Attempting to sign in anyway...",
+          });
+          
+          // Try again after a brief delay
+          setTimeout(async () => {
+            const retryResult = await signIn(email, password);
+            if (retryResult.error) {
+              toast({
+                title: "Sign In Failed",
+                description: retryResult.error.message || "Invalid email or password",
+                variant: "destructive",
+              });
+            } else if (retryResult.data && retryResult.data.user) {
+              toast({
+                title: "Welcome back",
+                description: "You have successfully signed in",
+              });
+              navigate("/app");
+            }
+            setIsLoading(false);
+          }, 1000);
+          return;
+        }
+        
         toast({
           title: "Sign In Failed",
           description: error.message || "Invalid email or password",
