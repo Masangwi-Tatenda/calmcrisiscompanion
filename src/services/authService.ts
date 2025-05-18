@@ -80,7 +80,10 @@ const authService = {
       
       return { 
         success: true,
-        user: data.user
+        user: data.user,
+        message: data.user?.identities?.length === 0 ? 
+          "This email is already registered. Please sign in instead." : 
+          "Account created successfully. Please check your email for confirmation."
       };
     } catch (error: any) {
       return { 
