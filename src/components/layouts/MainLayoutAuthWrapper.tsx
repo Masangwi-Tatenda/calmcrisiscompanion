@@ -5,7 +5,7 @@ import MainLayout from './MainLayout';
 
 const MainLayoutAuthWrapper = () => {
   return (
-    <ProtectedRoute>
+    <ProtectedRoute redirectTo="/signin">
       <MainLayout>
         <Outlet />
       </MainLayout>

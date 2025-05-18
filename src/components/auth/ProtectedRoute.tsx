@@ -3,10 +3,10 @@ import { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 
-type ProtectedRouteProps = {
+interface ProtectedRouteProps {
   children: ReactNode;
   redirectTo?: string;
-};
+}
 
 const ProtectedRoute = ({ 
   children, 
