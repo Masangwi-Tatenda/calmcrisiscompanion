@@ -29,7 +29,7 @@ const ForgotPassword = () => {
     setIsLoading(true);
     
     try {
-      const response = await authService.forgotPassword(email);
+      const response = await authService.resetPassword(email);
       
       if (response.success) {
         setIsSubmitted(true);
