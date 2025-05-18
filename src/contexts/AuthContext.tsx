@@ -4,17 +4,18 @@ import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 
+// Updated AuthContextType to match Supabase's actual return types
 type AuthContextType = {
   user: User | null;
   session: Session | null;
   isLoading: boolean;
   signIn: (email: string, password: string) => Promise<{
+    data: { user: User | null; session: Session | null } | null;
     error: Error | null;
-    data: Session | null;
   }>;
   signUp: (email: string, password: string) => Promise<{
+    data: { user: User | null; session: Session | null } | null;
     error: Error | null;
-    data: { user: User | null; session: Session | null };
   }>;
   signOut: () => Promise<void>;
 };

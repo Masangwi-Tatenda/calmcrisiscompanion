@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ShieldAlert, Eye, EyeOff } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
-import authService from "@/services/authService";
+import { useAuth } from "@/contexts/AuthContext";
 
 const SignIn = () => {
   const [email, setEmail] = useState("");
@@ -14,6 +14,7 @@ const SignIn = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { signIn } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,25 +31,25 @@ const SignIn = () => {
     setIsLoading(true);
     
     try {
-      const response = await authService.signIn({ email, password });
+      const { data, error } = await signIn(email, password);
       
-      if (response.success) {
+      if (error) {
+        toast({
+          title: "Sign In Failed",
+          description: error.message || "Invalid email or password",
+          variant: "destructive",
+        });
+      } else if (data && data.user) {
         toast({
           title: "Welcome back",
           description: "You have successfully signed in",
         });
         navigate("/app");
-      } else {
-        toast({
-          title: "Sign In Failed",
-          description: response.message || "Invalid email or password",
-          variant: "destructive",
-        });
       }
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "An unexpected error occurred",
+        description: error.message || "An unexpected error occurred",
         variant: "destructive",
       });
     } finally {

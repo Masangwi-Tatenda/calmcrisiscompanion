@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ShieldAlert, Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
-import authService from "@/services/authService";
+import { useAuth } from "@/contexts/AuthContext";
 
 const SignUp = () => {
   const [name, setName] = useState("");
@@ -15,6 +15,7 @@ const SignUp = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { signUp } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,25 +41,25 @@ const SignUp = () => {
     setIsLoading(true);
     
     try {
-      const response = await authService.signUp({ name, email, password });
+      const { data, error } = await signUp(email, password);
       
-      if (response.success) {
+      if (error) {
+        toast({
+          title: "Sign Up Failed",
+          description: error.message || "Failed to create account",
+          variant: "destructive",
+        });
+      } else if (data) {
         toast({
           title: "Account created",
           description: "Your account has been created successfully",
         });
         navigate("/fill-profile");
-      } else {
-        toast({
-          title: "Sign Up Failed",
-          description: response.message || "Failed to create account",
-          variant: "destructive",
-        });
       }
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "An unexpected error occurred",
+        description: error.message || "An unexpected error occurred",
         variant: "destructive",
       });
     } finally {
