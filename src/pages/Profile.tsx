@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { User, Shield, Settings, ChevronRight, LogOut, MapPin, Phone, Droplet, Heart, Bell } from "lucide-react";
@@ -7,10 +6,14 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { useGetProfile } from "@/services/profileService";
 
 const Profile = () => {
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
+  const { signOut, user } = useAuth();
+  const { data: profileData, isLoading: profileLoading } = useGetProfile();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   
   const [notificationSettings, setNotificationSettings] = useState({
@@ -21,26 +24,37 @@ const Profile = () => {
   });
 
   const [userProfile, setUserProfile] = useState({
-    name: "John Doe",
-    location: "New York, NY",
-    phone: "(555) 123-4567",
-    email: "john.doe@example.com",
-    bloodType: "O+",
-    allergies: ["Penicillin", "Peanuts"],
-    emergencyContacts: [
-      { name: "Jane Doe", relationship: "Spouse", phone: "(555) 987-6543" },
-      { name: "Mike Smith", relationship: "Brother", phone: "(555) 234-5678" }
-    ],
+    name: "Loading...",
+    location: "Loading...",
+    phone: "Loading...",
+    email: user?.email || "Loading...",
+    bloodType: "",
+    allergies: [] as string[],
+    emergencyContacts: [] as {name: string, relationship: string, phone: string}[],
   });
 
-  const handleSignOut = () => {
-    localStorage.removeItem("isAuthenticated");
-    localStorage.removeItem("hasSeenOnboarding");
+  useEffect(() => {
+    if (profileData) {
+      setUserProfile({
+        name: `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim() || 'User',
+        location: profileData.city ? `${profileData.city}, ${profileData.state || ''}`.trim() : 'No location set',
+        phone: profileData.phone || 'No phone set',
+        email: user?.email || 'No email set',
+        bloodType: "",
+        allergies: profileData.allergies ? profileData.allergies.split(',') : [],
+        emergencyContacts: [],
+      });
+      
+      // In a real app, fetch emergency contacts from the database
+    }
+  }, [profileData, user]);
+
+  const handleSignOut = async () => {
+    await signOut();
     toast({
       title: "Signed out",
       description: "You have been successfully signed out",
     });
-    navigate("/signin");
   };
 
   const handleToggleNotification = (key: string) => {
@@ -142,6 +156,17 @@ const Profile = () => {
     
     setIsDialogOpen(false);
   };
+
+  if (profileLoading) {
+    return (
+      <div className="page-container flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="mt-2 text-sm text-muted-foreground">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="page-container">

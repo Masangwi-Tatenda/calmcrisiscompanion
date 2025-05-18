@@ -9,16 +9,353 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      admin_users: {
+        Row: {
+          created_at: string
+          id: string
+          role: string
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          role?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: string
+        }
+        Relationships: []
+      }
+      alerts: {
+        Row: {
+          alert_type: Database["public"]["Enums"]["alert_type"]
+          created_at: string
+          created_by: string | null
+          description: string
+          end_time: string | null
+          id: string
+          latitude: number
+          longitude: number
+          radius: number
+          severity: Database["public"]["Enums"]["alert_severity"]
+          source: string | null
+          start_time: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          alert_type: Database["public"]["Enums"]["alert_type"]
+          created_at?: string
+          created_by?: string | null
+          description: string
+          end_time?: string | null
+          id?: string
+          latitude: number
+          longitude: number
+          radius: number
+          severity: Database["public"]["Enums"]["alert_severity"]
+          source?: string | null
+          start_time?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          alert_type?: Database["public"]["Enums"]["alert_type"]
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          end_time?: string | null
+          id?: string
+          latitude?: number
+          longitude?: number
+          radius?: number
+          severity?: Database["public"]["Enums"]["alert_severity"]
+          source?: string | null
+          start_time?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          address: string | null
+          allergies: string | null
+          avatar_url: string | null
+          city: string | null
+          created_at: string
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
+          first_name: string | null
+          id: string
+          last_name: string | null
+          medical_conditions: string | null
+          phone: string | null
+          state: string | null
+          updated_at: string
+          zip_code: string | null
+        }
+        Insert: {
+          address?: string | null
+          allergies?: string | null
+          avatar_url?: string | null
+          city?: string | null
+          created_at?: string
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          first_name?: string | null
+          id: string
+          last_name?: string | null
+          medical_conditions?: string | null
+          phone?: string | null
+          state?: string | null
+          updated_at?: string
+          zip_code?: string | null
+        }
+        Update: {
+          address?: string | null
+          allergies?: string | null
+          avatar_url?: string | null
+          city?: string | null
+          created_at?: string
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          medical_conditions?: string | null
+          phone?: string | null
+          state?: string | null
+          updated_at?: string
+          zip_code?: string | null
+        }
+        Relationships: []
+      }
+      saved_resources: {
+        Row: {
+          created_at: string
+          id: string
+          resource_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          resource_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          resource_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_resources_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_alert_history: {
+        Row: {
+          alert_id: string
+          created_at: string
+          dismissed: boolean | null
+          id: string
+          saved: boolean | null
+          user_id: string
+          viewed_at: string | null
+        }
+        Insert: {
+          alert_id: string
+          created_at?: string
+          dismissed?: boolean | null
+          id?: string
+          saved?: boolean | null
+          user_id: string
+          viewed_at?: string | null
+        }
+        Update: {
+          alert_id?: string
+          created_at?: string
+          dismissed?: boolean | null
+          id?: string
+          saved?: boolean | null
+          user_id?: string
+          viewed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_alert_history_alert_id_fkey"
+            columns: ["alert_id"]
+            isOneToOne: false
+            referencedRelation: "alerts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_alert_history_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_alert_settings: {
+        Row: {
+          created_at: string
+          fire_alerts: boolean | null
+          health_alerts: boolean | null
+          id: string
+          notification_radius: number | null
+          other_alerts: boolean | null
+          police_alerts: boolean | null
+          updated_at: string
+          user_id: string
+          weather_alerts: boolean | null
+        }
+        Insert: {
+          created_at?: string
+          fire_alerts?: boolean | null
+          health_alerts?: boolean | null
+          id?: string
+          notification_radius?: number | null
+          other_alerts?: boolean | null
+          police_alerts?: boolean | null
+          updated_at?: string
+          user_id: string
+          weather_alerts?: boolean | null
+        }
+        Update: {
+          created_at?: string
+          fire_alerts?: boolean | null
+          health_alerts?: boolean | null
+          id?: string
+          notification_radius?: number | null
+          other_alerts?: boolean | null
+          police_alerts?: boolean | null
+          updated_at?: string
+          user_id?: string
+          weather_alerts?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_alert_settings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_locations: {
+        Row: {
+          address: string | null
+          created_at: string
+          id: string
+          is_primary: boolean | null
+          latitude: number
+          longitude: number
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          id?: string
+          is_primary?: boolean | null
+          latitude: number
+          longitude: number
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          id?: string
+          is_primary?: boolean | null
+          latitude?: number
+          longitude?: number
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_locations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      weather_data: {
+        Row: {
+          created_at: string
+          data: Json
+          expires_at: string
+          id: string
+          latitude: number
+          longitude: number
+        }
+        Insert: {
+          created_at?: string
+          data: Json
+          expires_at: string
+          id?: string
+          latitude: number
+          longitude: number
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          expires_at?: string
+          id?: string
+          latitude?: number
+          longitude?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_nearby_alerts: {
+        Args: { user_lat: number; user_lng: number; radius_meters: number }
+        Returns: {
+          alert_type: Database["public"]["Enums"]["alert_type"]
+          created_at: string
+          created_by: string | null
+          description: string
+          end_time: string | null
+          id: string
+          latitude: number
+          longitude: number
+          radius: number
+          severity: Database["public"]["Enums"]["alert_severity"]
+          source: string | null
+          start_time: string
+          title: string
+          updated_at: string
+        }[]
+      }
+      is_admin: {
+        Args: { user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      alert_severity: "low" | "medium" | "high" | "critical"
+      alert_type: "police" | "fire" | "health" | "weather" | "other"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -133,6 +470,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      alert_severity: ["low", "medium", "high", "critical"],
+      alert_type: ["police", "fire", "health", "weather", "other"],
+    },
   },
 } as const
