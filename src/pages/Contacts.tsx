@@ -162,7 +162,8 @@ const Contacts = () => {
                 <div className="flex items-center">
                   <div className="p-2 rounded-full bg-primary/10 mr-3">
                     {getIconForType(contact.type) && 
-                      React.createElement(getIconForType(contact.type), { className: "h-5 w-5 text-primary" })}
+                      (contact.type === "emergency" ? Shield : contact.type === "service" ? Building : Users)
+                      /*React.createElement(getIconForType(contact.type), { className: "h-5 w-5 text-primary" })*/}
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center">

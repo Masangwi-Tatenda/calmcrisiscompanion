@@ -17,7 +17,7 @@ export const useGetMessages = (chatRoomId?: string, recipientId?: string) => {
     queryKey: ['messages', chatRoomId, recipientId],
     queryFn: async () => {
       let query = supabase
-        .from('messages')
+        .from('messages' as any)
         .select('*')
         .order('created_at', { ascending: true });
 
@@ -38,7 +38,7 @@ export const useGetMessages = (chatRoomId?: string, recipientId?: string) => {
         throw new Error(error.message);
       }
       
-      return data as Message[];
+      return data as unknown as Message[];
     },
     enabled: !!chatRoomId || !!recipientId, // Only run query when either parameter is provided
   });
@@ -60,7 +60,7 @@ export const useSendMessage = () => {
       };
       
       const { data, error } = await supabase
-        .from('messages')
+        .from('messages' as any)
         .insert(validatedMessage)
         .select();
       
@@ -68,7 +68,7 @@ export const useSendMessage = () => {
         throw new Error(error.message);
       }
       
-      return data[0] as Message;
+      return (data[0] || {}) as unknown as Message;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
@@ -92,7 +92,7 @@ export const useSubscribeToMessages = (
         filter: chatRoomId ? `chat_room_id=eq.${chatRoomId}` : undefined
       },
       (payload) => {
-        callback(payload.new as Message);
+        callback(payload.new as unknown as Message);
       }
     )
     .subscribe();

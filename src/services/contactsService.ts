@@ -31,7 +31,7 @@ export const useGetContacts = () => {
     queryFn: async () => {
       // Type assertion to work with the database schema
       const { data, error } = await supabase
-        .from('contacts')
+        .from('contacts' as any)
         .select('*')
         .order('is_favorite', { ascending: false })
         .order('created_at', { ascending: false });
@@ -41,7 +41,7 @@ export const useGetContacts = () => {
       }
       
       // Cast the data to our Contact interface
-      return (data || []) as Contact[];
+      return (data || []) as unknown as Contact[];
     },
   });
 };
@@ -62,7 +62,7 @@ export const useCreateContact = () => {
       };
       
       const { data, error } = await supabase
-        .from('contacts')
+        .from('contacts' as any)
         .insert(newContact as any)
         .select()
         .single();
@@ -71,7 +71,7 @@ export const useCreateContact = () => {
         throw new Error(error.message);
       }
       
-      return data as Contact;
+      return data as unknown as Contact;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -87,7 +87,7 @@ export const useUpdateContact = () => {
   return useMutation({
     mutationFn: async (contact: Partial<Contact> & { id: string }) => {
       const { data, error } = await supabase
-        .from('contacts')
+        .from('contacts' as any)
         .update(contact as any)
         .eq('id', contact.id)
         .select()
@@ -97,7 +97,7 @@ export const useUpdateContact = () => {
         throw new Error(error.message);
       }
       
-      return data as Contact;
+      return data as unknown as Contact;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -113,7 +113,7 @@ export const useDeleteContact = () => {
   return useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from('contacts')
+        .from('contacts' as any)
         .delete()
         .eq('id', id);
       

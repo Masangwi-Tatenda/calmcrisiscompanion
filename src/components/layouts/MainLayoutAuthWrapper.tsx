@@ -2,14 +2,17 @@
 import { Outlet } from 'react-router-dom';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import MainLayout from './MainLayout';
+import { AuthProvider } from '@/contexts/AuthContext';
 
 const MainLayoutAuthWrapper = () => {
   return (
-    <ProtectedRoute redirectTo="/signin">
-      <MainLayout>
-        <Outlet />
-      </MainLayout>
-    </ProtectedRoute>
+    <AuthProvider>
+      <ProtectedRoute redirectTo="/signin">
+        <MainLayout>
+          <Outlet />
+        </MainLayout>
+      </ProtectedRoute>
+    </AuthProvider>
   );
 };
 
