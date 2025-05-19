@@ -10,14 +10,26 @@ export interface Contact {
   type: string;
   is_favorite: boolean;
   created_at: string;
-  user_id?: string; // Added to match database structure
+  user_id?: string;
+}
+
+// Type for what we get from the database
+interface ContactFromDB {
+  id: string;
+  name: string;
+  phone: string;
+  relationship?: string;
+  type: string;
+  is_favorite: boolean;
+  created_at: string;
+  user_id: string;
 }
 
 export const useGetContacts = () => {
   return useQuery({
     queryKey: ['contacts'],
     queryFn: async () => {
-      // Type annotation to work with Supabase's typed client
+      // Type assertion to work with the database schema
       const { data, error } = await supabase
         .from('contacts')
         .select('*')
@@ -28,8 +40,8 @@ export const useGetContacts = () => {
         throw new Error(error.message);
       }
       
-      // Since our local schema and DB schema now match, we can safely cast
-      return data as Contact[];
+      // Cast the data to our Contact interface
+      return (data || []) as Contact[];
     },
   });
 };
@@ -51,7 +63,7 @@ export const useCreateContact = () => {
       
       const { data, error } = await supabase
         .from('contacts')
-        .insert(newContact)
+        .insert(newContact as any)
         .select()
         .single();
       
@@ -76,7 +88,7 @@ export const useUpdateContact = () => {
     mutationFn: async (contact: Partial<Contact> & { id: string }) => {
       const { data, error } = await supabase
         .from('contacts')
-        .update(contact)
+        .update(contact as any)
         .eq('id', contact.id)
         .select()
         .single();

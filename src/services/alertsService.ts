@@ -13,6 +13,21 @@ export interface Alert {
   created_at: string;
 }
 
+// Interface to match what's in the database
+interface AlertFromDB {
+  id: string;
+  alert_type: string;
+  title: string;
+  description: string;
+  latitude: number;
+  longitude: number;
+  severity: string;
+  created_at: string;
+  end_time?: string;
+  created_by?: string;
+  updated_at?: string;
+}
+
 export const useGetAlerts = () => {
   return useQuery({
     queryKey: ['alerts'],
@@ -29,12 +44,12 @@ export const useGetAlerts = () => {
       // Map the database fields to our Alert interface
       return (data || []).map(alert => ({
         id: alert.id,
-        type: alert.type || alert.alert_type, // Handle both field names
+        type: alert.alert_type || 'other', // Handle field name from DB
         title: alert.title,
         description: alert.description,
-        location: alert.location,
+        location: `${alert.latitude}, ${alert.longitude}`,
         severity: alert.severity,
-        icon: alert.icon,
+        icon: getIconForAlertType(alert.alert_type),
         created_at: alert.created_at
       })) as Alert[];
     },
@@ -58,12 +73,12 @@ export const useGetRecentAlerts = (limit = 5) => {
       // Map the database fields to our Alert interface
       return (data || []).map(alert => ({
         id: alert.id,
-        type: alert.type || alert.alert_type, // Handle both field names
+        type: alert.alert_type || 'other', // Handle field name from DB
         title: alert.title,
         description: alert.description,
-        location: alert.location,
+        location: `${alert.latitude}, ${alert.longitude}`,
         severity: alert.severity,
-        icon: alert.icon,
+        icon: getIconForAlertType(alert.alert_type),
         created_at: alert.created_at
       })) as Alert[];
     },
@@ -83,12 +98,12 @@ export const useSubscribeToAlerts = (callback: (alert: Alert) => void) => {
         // Convert payload to match Alert interface
         const newAlert = {
           id: payload.new.id,
-          type: payload.new.type || payload.new.alert_type,
+          type: payload.new.alert_type || 'other',
           title: payload.new.title,
           description: payload.new.description,
-          location: payload.new.location,
+          location: `${payload.new.latitude}, ${payload.new.longitude}`,
           severity: payload.new.severity,
-          icon: payload.new.icon,
+          icon: getIconForAlertType(payload.new.alert_type),
           created_at: payload.new.created_at
         } as Alert;
         
@@ -101,3 +116,19 @@ export const useSubscribeToAlerts = (callback: (alert: Alert) => void) => {
     supabase.removeChannel(channel);
   };
 };
+
+// Helper function to get icon based on alert type
+function getIconForAlertType(alertType: string): string {
+  switch (alertType?.toLowerCase()) {
+    case 'weather':
+      return 'cloud-rain';
+    case 'police':
+      return 'shield';
+    case 'fire':
+      return 'flame';
+    case 'health':
+      return 'heart-pulse';
+    default:
+      return 'alert-triangle';
+  }
+}

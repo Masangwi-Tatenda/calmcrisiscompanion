@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import React from "react"; // Added explicit React import
 import { Phone, Plus, Search, Star, Users, Mail, Shield, Building, Heart } from "lucide-react";
