@@ -26,7 +26,17 @@ export const useGetAlerts = () => {
         throw new Error(error.message);
       }
       
-      return data as Alert[];
+      // Map the database fields to our Alert interface
+      return (data || []).map(alert => ({
+        id: alert.id,
+        type: alert.type || alert.alert_type, // Handle both field names
+        title: alert.title,
+        description: alert.description,
+        location: alert.location,
+        severity: alert.severity,
+        icon: alert.icon,
+        created_at: alert.created_at
+      })) as Alert[];
     },
   });
 };
@@ -45,7 +55,17 @@ export const useGetRecentAlerts = (limit = 5) => {
         throw new Error(error.message);
       }
       
-      return data as Alert[];
+      // Map the database fields to our Alert interface
+      return (data || []).map(alert => ({
+        id: alert.id,
+        type: alert.type || alert.alert_type, // Handle both field names
+        title: alert.title,
+        description: alert.description,
+        location: alert.location,
+        severity: alert.severity,
+        icon: alert.icon,
+        created_at: alert.created_at
+      })) as Alert[];
     },
   });
 };
@@ -60,7 +80,19 @@ export const useSubscribeToAlerts = (callback: (alert: Alert) => void) => {
         table: 'alerts'
       },
       (payload) => {
-        callback(payload.new as Alert);
+        // Convert payload to match Alert interface
+        const newAlert = {
+          id: payload.new.id,
+          type: payload.new.type || payload.new.alert_type,
+          title: payload.new.title,
+          description: payload.new.description,
+          location: payload.new.location,
+          severity: payload.new.severity,
+          icon: payload.new.icon,
+          created_at: payload.new.created_at
+        } as Alert;
+        
+        callback(newAlert);
       }
     )
     .subscribe();

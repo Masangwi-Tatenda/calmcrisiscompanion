@@ -10,12 +10,14 @@ export interface Contact {
   type: string;
   is_favorite: boolean;
   created_at: string;
+  user_id?: string; // Added to match database structure
 }
 
 export const useGetContacts = () => {
   return useQuery({
     queryKey: ['contacts'],
     queryFn: async () => {
+      // Type annotation to work with Supabase's typed client
       const { data, error } = await supabase
         .from('contacts')
         .select('*')
@@ -26,6 +28,7 @@ export const useGetContacts = () => {
         throw new Error(error.message);
       }
       
+      // Since our local schema and DB schema now match, we can safely cast
       return data as Contact[];
     },
   });
@@ -36,9 +39,19 @@ export const useCreateContact = () => {
   
   return useMutation({
     mutationFn: async (contact: Omit<Contact, 'id' | 'created_at'>) => {
+      // Get current user ID
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) throw new Error("User not authenticated");
+      
+      // Create the contact with the user_id
+      const newContact = {
+        ...contact,
+        user_id: session.user.id,
+      };
+      
       const { data, error } = await supabase
         .from('contacts')
-        .insert(contact)
+        .insert(newContact)
         .select()
         .single();
       

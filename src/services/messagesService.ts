@@ -24,8 +24,12 @@ export const useGetMessages = (chatRoomId?: string, recipientId?: string) => {
       if (chatRoomId) {
         query = query.eq('chat_room_id', chatRoomId);
       } else if (recipientId) {
-        const currentUser = supabase.auth.getSession();
-        query = query.or(`sender_id.eq.${recipientId},recipient_id.eq.${recipientId}`);
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user) throw new Error("User not authenticated");
+        
+        // Find messages between the current user and the recipient
+        query = query.or(`sender_id.eq.${session.user.id},recipient_id.eq.${session.user.id}`)
+          .or(`sender_id.eq.${recipientId},recipient_id.eq.${recipientId}`);
       }
       
       const { data, error } = await query;
@@ -36,6 +40,7 @@ export const useGetMessages = (chatRoomId?: string, recipientId?: string) => {
       
       return data as Message[];
     },
+    enabled: !!chatRoomId || !!recipientId, // Only run query when either parameter is provided
   });
 };
 
@@ -44,9 +49,19 @@ export const useSendMessage = () => {
   
   return useMutation({
     mutationFn: async (message: Omit<Message, 'id' | 'created_at'>) => {
+      // Get current user session
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) throw new Error("User not authenticated");
+      
+      // Make sure the sender_id matches the current user
+      const validatedMessage = {
+        ...message,
+        sender_id: session.user.id
+      };
+      
       const { data, error } = await supabase
         .from('messages')
-        .insert(message)
+        .insert(validatedMessage)
         .select();
       
       if (error) {
