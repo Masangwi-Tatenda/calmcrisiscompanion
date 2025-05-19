@@ -40,10 +40,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // You can add additional actions here based on events
         if (event === "SIGNED_OUT") {
           navigate("/signin");
+          toast({
+            title: "Signed out successfully",
+            description: "Come back soon!",
+            duration: 3000, // Auto-dismiss after 3 seconds
+          });
         } else if (event === "SIGNED_IN") {
           toast({
             title: "Signed in successfully",
             description: "Welcome to the application",
+            duration: 3000, // Auto-dismiss after 3 seconds
           });
         }
       }
@@ -80,7 +86,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     await supabase.auth.signOut();
-    navigate("/signin");
   };
 
   const value = {

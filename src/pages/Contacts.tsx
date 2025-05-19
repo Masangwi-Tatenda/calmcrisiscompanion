@@ -9,93 +9,31 @@ import { toast } from "@/components/ui/use-toast";
 import { Dialog } from "@/components/ui/dialog";
 import AddContactForm from "@/components/contacts/AddContactForm";
 import { useNavigate } from "react-router-dom";
-
-const mockContacts = [
-  {
-    id: 1,
-    name: "Emergency Services",
-    phone: "911",
-    type: "emergency" as const,
-    icon: Shield,
-    isFavorite: true,
-  },
-  {
-    id: 2,
-    name: "Poison Control",
-    phone: "1-800-222-1222",
-    type: "emergency" as const,
-    icon: Shield,
-    isFavorite: false,
-  },
-  {
-    id: 3,
-    name: "John Smith",
-    phone: "(555) 123-4567",
-    type: "personal" as const,
-    icon: Users,
-    isFavorite: true,
-  },
-  {
-    id: 4,
-    name: "Sarah Johnson",
-    phone: "(555) 987-6543",
-    type: "personal" as const,
-    icon: Users,
-    isFavorite: false,
-  },
-  {
-    id: 5,
-    name: "Local Fire Department",
-    phone: "(555) 789-4561",
-    type: "service" as const,
-    icon: Building,
-    isFavorite: false,
-  },
-  {
-    id: 6,
-    name: "Medical Clinic",
-    phone: "(555) 234-5678",
-    type: "service" as const,
-    icon: Heart,
-    isFavorite: true,
-  },
-];
+import { useGetContacts, Contact } from "@/services/contactsService";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Contacts = () => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [contacts, setContacts] = useState<Array<typeof mockContacts[0]>>([]);
-  const [filteredContacts, setFilteredContacts] = useState<Array<typeof mockContacts[0]>>([]);
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { data: contactsData, isLoading } = useGetContacts();
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [filteredContacts, setFilteredContacts] = useState<Contact[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   const [isAddContactOpen, setIsAddContactOpen] = useState(false);
-  const navigate = useNavigate();
 
+  // Set contacts when data is loaded
   useEffect(() => {
-    // Simulate API fetch
-    const timer = setTimeout(() => {
-      // Try to get contacts from localStorage first
-      const savedContacts = localStorage.getItem("contacts");
-      if (savedContacts) {
-        try {
-          const parsedContacts = JSON.parse(savedContacts);
-          setContacts(parsedContacts);
-          setFilteredContacts(parsedContacts);
-        } catch (e) {
-          console.error("Error parsing saved contacts:", e);
-          setContacts(mockContacts);
-          setFilteredContacts(mockContacts);
-        }
-      } else {
-        setContacts(mockContacts);
-        setFilteredContacts(mockContacts);
-      }
-      setIsLoading(false);
-    }, 1000);
+    if (contactsData) {
+      setContacts(contactsData);
+      setFilteredContacts(contactsData);
+    }
+  }, [contactsData]);
 
-    return () => clearTimeout(timer);
-  }, []);
-
+  // Filter contacts based on search query and active tab
   useEffect(() => {
+    if (!contacts.length) return;
+    
     let result = [...contacts];
     
     // Apply category filter
@@ -116,10 +54,11 @@ const Contacts = () => {
     setFilteredContacts(result);
   }, [contacts, activeTab, searchQuery]);
 
-  const handleCall = (contact: typeof mockContacts[0]) => {
+  const handleCall = (contact: Contact) => {
     toast({
       title: `Calling ${contact.name}`,
       description: `Dialing ${contact.phone}...`,
+      duration: 3000, // Auto-dismiss after 3 seconds
     });
     
     // In a real mobile app, this would use a native API to initiate a call
@@ -127,10 +66,11 @@ const Contacts = () => {
     window.location.href = `tel:${contact.phone.replace(/\D/g, '')}`;
   };
 
-  const handleMessage = (contact: typeof mockContacts[0]) => {
+  const handleMessage = (contact: Contact) => {
     toast({
       title: `Message ${contact.name}`,
       description: `Opening messaging for ${contact.phone}...`,
+      duration: 3000, // Auto-dismiss after 3 seconds
     });
     
     // For personal contacts, navigate to chat
@@ -147,26 +87,20 @@ const Contacts = () => {
   };
 
   const addNewContact = (newContact: any) => {
-    const iconMap: Record<string, any> = {
-      emergency: Shield,
-      personal: Users,
-      service: Building,
-    };
-    
-    const contact = {
-      ...newContact,
-      id: contacts.length + 1,
-      icon: iconMap[newContact.type] || Users,
-    };
-    
-    const updatedContacts = [...contacts, contact];
-    setContacts(updatedContacts);
-    
-    // Save to localStorage
-    try {
-      localStorage.setItem("contacts", JSON.stringify(updatedContacts));
-    } catch (e) {
-      console.error("Error saving contacts to localStorage:", e);
+    // ContactForm component will handle the actual saving to Supabase
+    setIsAddContactOpen(false);
+  };
+
+  // Map contact.type to icon component
+  const getIconForType = (type: string) => {
+    switch (type) {
+      case "emergency":
+        return Shield;
+      case "service":
+        return Building;
+      case "personal":
+      default:
+        return Users;
     }
   };
 
@@ -227,16 +161,20 @@ const Contacts = () => {
               >
                 <div className="flex items-center">
                   <div className="p-2 rounded-full bg-primary/10 mr-3">
-                    {contact.icon && <contact.icon className="h-5 w-5 text-primary" />}
+                    {getIconForType(contact.type) && 
+                      React.createElement(getIconForType(contact.type), { className: "h-5 w-5 text-primary" })}
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center">
                       <h3 className="font-medium">{contact.name}</h3>
-                      {contact.isFavorite && (
+                      {contact.is_favorite && (
                         <Star className="h-3.5 w-3.5 text-yellow-500 ml-2 fill-current" />
                       )}
                     </div>
                     <p className="text-sm text-muted-foreground">{contact.phone}</p>
+                    {contact.relationship && (
+                      <p className="text-xs text-muted-foreground">{contact.relationship}</p>
+                    )}
                   </div>
                   <div className="flex space-x-2">
                     <button

@@ -33,7 +33,14 @@ import EnhancedProfile from "./pages/EnhancedProfile";
 import Nearby from "./pages/Nearby";
 import ReportIncident from "./pages/ReportIncident";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const App = () => (
   <BrowserRouter>
@@ -42,7 +49,13 @@ const App = () => (
         <AuthProvider>
           <TooltipProvider>
             <Toaster />
-            <Sonner />
+            <Sonner 
+              position="top-right"
+              expand={false}
+              richColors
+              closeButton
+              duration={3000}
+            />
             <Routes>
               <Route path="/" element={<SplashScreen />} />
               <Route path="/onboarding" element={<Onboarding />} />

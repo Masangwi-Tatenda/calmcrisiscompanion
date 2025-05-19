@@ -2,57 +2,48 @@
 import { useState, useRef, useEffect } from "react";
 import { Send, ArrowLeft, MoreVertical, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
-
-const mockMessages = [
-  {
-    id: 1,
-    text: "Welcome to the Emergency Chat. This is a safe space to communicate during emergencies.",
-    sender: "system",
-    timestamp: "10:00 AM",
-  },
-  {
-    id: 2,
-    text: "Is anyone in the downtown area? I'm hearing reports of flooding on Main Street.",
-    sender: "Sarah",
-    timestamp: "10:05 AM",
-  },
-  {
-    id: 3,
-    text: "Yes, I'm near there. The water is rising quickly. Police are redirecting traffic now.",
-    sender: "Michael",
-    timestamp: "10:07 AM",
-  },
-  {
-    id: 4,
-    text: "City emergency services have announced evacuation for zones A and B. Please check your zone on the map.",
-    sender: "system",
-    timestamp: "10:10 AM",
-  },
-  {
-    id: 5,
-    text: "I'm in zone B. Has anyone been to the shelter at Central High School? Is it open yet?",
-    sender: "Sarah",
-    timestamp: "10:12 AM",
-  },
-];
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { useSendMessage, useGetMessages, useSubscribeToMessages, Message } from "@/services/messagesService";
 
 const Chat = () => {
   const navigate = useNavigate();
-  const [messages, setMessages] = useState(mockMessages);
+  const { user } = useAuth();
+  const [searchParams] = useSearchParams();
+  const contactName = searchParams.get('contact') || 'Community Emergency Chat';
+  const contactPhone = searchParams.get('phone');
+  const chatRoomId = searchParams.get('chatRoomId') || 'community-emergency';
+  const isGroupChat = !contactPhone;
+  
+  const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
-  const messagesEndRef = useRef<HTMLDivElement>(null);
   const [showParticipants, setShowParticipants] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
-  const participants = [
-    { name: "Sarah", status: "online" },
-    { name: "Michael", status: "online" },
-    { name: "Emergency Services", status: "online" },
-    { name: "John", status: "offline" },
-    { name: "Lisa", status: "offline" },
-  ];
+  // Get messages from Supabase
+  const { data: messagesData, isLoading } = useGetMessages(chatRoomId);
+  const sendMessageMutation = useSendMessage();
 
+  // Subscribe to new messages
+  useEffect(() => {
+    const unsubscribe = useSubscribeToMessages(chatRoomId, (newMessage) => {
+      setMessages(prevMessages => [...prevMessages, newMessage]);
+    });
+    
+    return () => {
+      unsubscribe();
+    };
+  }, [chatRoomId]);
+
+  // Set messages when loaded from Supabase
+  useEffect(() => {
+    if (messagesData) {
+      setMessages(messagesData);
+    }
+  }, [messagesData]);
+
+  // Scroll to bottom when messages change
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
@@ -61,18 +52,23 @@ const Chat = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const handleSendMessage = () => {
-    if (!newMessage.trim()) return;
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !user) return;
 
-    const message = {
-      id: messages.length + 1,
-      text: newMessage,
-      sender: "You",
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    };
+    try {
+      const messageToSend = {
+        sender_id: user.id,
+        recipient_id: null,
+        chat_room_id: chatRoomId,
+        is_group_message: isGroupChat,
+        message_text: newMessage
+      };
 
-    setMessages([...messages, message]);
-    setNewMessage("");
+      await sendMessageMutation.mutateAsync(messageToSend);
+      setNewMessage("");
+    } catch (error) {
+      console.error("Failed to send message:", error);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -81,6 +77,15 @@ const Chat = () => {
       handleSendMessage();
     }
   };
+
+  // Mock participants data (in a real app, this would come from the database)
+  const participants = [
+    { name: "Sarah", status: "online" },
+    { name: "Michael", status: "online" },
+    { name: "Emergency Services", status: "online" },
+    { name: "John", status: "offline" },
+    { name: "Lisa", status: "offline" },
+  ];
 
   return (
     <div className="flex flex-col h-full">
@@ -95,19 +100,27 @@ const Chat = () => {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="font-bold">Community Emergency Chat</h1>
-            <p className="text-xs text-muted-foreground">{participants.filter(p => p.status === "online").length} participants online</p>
+            <h1 className="font-bold">{contactName}</h1>
+            {isGroupChat ? (
+              <p className="text-xs text-muted-foreground">
+                {participants.filter(p => p.status === "online").length} participants online
+              </p>
+            ) : (
+              <p className="text-xs text-muted-foreground">{contactPhone}</p>
+            )}
           </div>
         </div>
         <div className="flex items-center space-x-1">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="p-1"
-            onClick={() => setShowParticipants(!showParticipants)}
-          >
-            <Users className="h-5 w-5" />
-          </Button>
+          {isGroupChat && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="p-1"
+              onClick={() => setShowParticipants(!showParticipants)}
+            >
+              <Users className="h-5 w-5" />
+            </Button>
+          )}
           <Button variant="ghost" size="sm" className="p-1">
             <MoreVertical className="h-5 w-5" />
           </Button>
@@ -117,37 +130,50 @@ const Chat = () => {
       <div className="relative flex-1 overflow-hidden">
         <div className="absolute inset-0 flex">
           <div className={`flex-1 overflow-y-auto p-4 hide-scrollbar ${showParticipants ? 'w-2/3' : 'w-full'} transition-all duration-300`} ref={chatContainerRef}>
-            <div className="space-y-4 pb-20">
-              {messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`flex ${
-                    message.sender === "You" ? "justify-end" : "justify-start"
-                  }`}
-                >
+            {isLoading ? (
+              <div className="space-y-4 pb-20">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="animate-pulse flex flex-col gap-2">
+                    <div className="h-10 bg-muted rounded-lg w-3/4"></div>
+                    <div className="h-10 bg-muted rounded-lg w-1/2 self-end"></div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-4 pb-20">
+                {messages.map((message) => (
                   <div
-                    className={`max-w-[80%] rounded-lg p-3 ${
-                      message.sender === "You"
-                        ? "bg-primary text-white"
-                        : message.sender === "system"
-                        ? "bg-muted"
-                        : "bg-secondary"
+                    key={message.id}
+                    className={`flex ${
+                      message.sender_id === user?.id ? "justify-end" : "justify-start"
                     }`}
                   >
-                    {message.sender !== "You" && message.sender !== "system" && (
-                      <p className="text-xs font-medium mb-1">
-                        {message.sender}
+                    <div
+                      className={`max-w-[80%] rounded-lg p-3 ${
+                        message.sender_id === user?.id
+                          ? "bg-primary text-white"
+                          : "bg-secondary"
+                      }`}
+                    >
+                      <p className="text-sm">{message.message_text}</p>
+                      <p className="text-xs mt-1 opacity-70 text-right">
+                        {new Date(message.created_at).toLocaleTimeString([], { 
+                          hour: '2-digit', 
+                          minute: '2-digit' 
+                        })}
                       </p>
-                    )}
-                    <p className="text-sm">{message.text}</p>
-                    <p className="text-xs mt-1 opacity-70 text-right">
-                      {message.timestamp}
-                    </p>
+                    </div>
                   </div>
-                </div>
-              ))}
-              <div ref={messagesEndRef} />
-            </div>
+                ))}
+
+                {messages.length === 0 && !isLoading && (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground">No messages yet. Start the conversation!</p>
+                  </div>
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+            )}
           </div>
 
           {showParticipants && (

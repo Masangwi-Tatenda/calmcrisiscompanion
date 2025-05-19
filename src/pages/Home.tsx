@@ -4,147 +4,58 @@ import { useNavigate } from "react-router-dom";
 import { Bell, MapPin, FileText, Phone, MessageCircle, Shield, AlertTriangle, Cloud, CloudRain, CloudLightning, Info } from "lucide-react";
 import QuickAction from "@/components/common/QuickAction";
 import AlertCard from "@/components/common/AlertCard";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/use-toast";
 import LiveWeatherWidget from "@/components/weather/LiveWeatherWidget";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
+import { useProfileData } from "@/hooks/use-profile-data";
+import { useGetRecentAlerts, useSubscribeToAlerts } from "@/services/alertsService";
 
 const Home = () => {
+  const { user } = useAuth();
+  const { profileData, isLoading: profileLoading } = useProfileData();
+  const { data: alertsData, isLoading: alertsLoading } = useGetRecentAlerts(5);
   const [userName, setUserName] = useState("User");
-  const [isLoading, setIsLoading] = useState(true);
   const [recentAlerts, setRecentAlerts] = useState<any[]>([]);
   const [markSafeOpen, setMarkSafeOpen] = useState(false);
   const [markedSafe, setMarkedSafe] = useState(false);
   const navigate = useNavigate();
 
-  // Mock user location for sharing
-  const userLocation = "37.7749,-122.4194"; // San Francisco coordinates
-
+  // Set user name from profile data
   useEffect(() => {
-    // Simulate API fetch for user data
-    const timerUser = setTimeout(() => {
-      // This would be replaced with actual auth data in a real app
-      setUserName("Alex");
-    }, 500);
+    if (profileData) {
+      const name = profileData.first_name || user?.email?.split('@')[0] || 'User';
+      setUserName(name);
+    }
+  }, [profileData, user]);
 
-    // Initial alert load
-    fetchAlerts();
+  // Set alerts from data
+  useEffect(() => {
+    if (alertsData) {
+      setRecentAlerts(alertsData);
+    }
+  }, [alertsData]);
 
-    // Set up interval for real-time updates (every 30 seconds)
-    const alertInterval = setInterval(() => {
-      fetchAlerts();
-    }, 30000);
-
+  // Subscribe to new alerts
+  useEffect(() => {
+    const unsubscribe = useSubscribeToAlerts((newAlert) => {
+      setRecentAlerts(prev => [newAlert, ...prev.slice(0, 4)]);
+      
+      toast({
+        title: `New ${newAlert.type} Alert`,
+        description: newAlert.title,
+        duration: 5000,
+      });
+    });
+    
     return () => {
-      clearTimeout(timerUser);
-      clearInterval(alertInterval);
+      unsubscribe();
     };
   }, []);
 
-  const fetchAlerts = () => {
-    // In a real app, this would be an API call
-    // For this demo, we'll simulate alert data with some randomization
-
-    // Base alerts that always show
-    const baseAlerts = [
-      {
-        id: 1,
-        title: "Flash Flood Warning",
-        message: "Flash flood warning issued for your area. Avoid low-lying areas and stay indoors.",
-        severity: "high",
-        time: "10 minutes ago",
-        icon: CloudRain,
-        category: "weather",
-        location: "Downtown area, Riverside"
-      },
-      {
-        id: 2,
-        title: "Weather Advisory",
-        message: "Strong thunderstorms expected this afternoon with possible hail.",
-        severity: "medium",
-        time: "1 hour ago",
-        icon: CloudLightning,
-        category: "weather",
-        location: "Entire county"
-      }
-    ];
-    
-    // Randomly show different alerts to simulate real-time changes
-    const possibleAlerts = [
-      {
-        id: 3,
-        title: "Traffic Alert",
-        message: "Major accident on Highway 101. Expect delays of 30+ minutes.",
-        severity: "medium",
-        time: "Just now",
-        icon: AlertTriangle,
-        category: "traffic",
-        location: "Highway 101, mile marker 25"
-      },
-      {
-        id: 4,
-        title: "Power Outage",
-        message: "Scheduled maintenance outage in your area from 10pm-2am tonight.",
-        severity: "low",
-        time: "5 minutes ago",
-        icon: Info,
-        category: "utility",
-        location: "North County districts"
-      },
-      {
-        id: 5,
-        title: "Water Main Break",
-        message: "Water service interrupted in downtown area. Repairs underway.",
-        severity: "medium",
-        time: "25 minutes ago",
-        icon: AlertTriangle,
-        category: "utility",
-        location: "Downtown business district"
-      },
-      {
-        id: 6,
-        title: "Air Quality Alert",
-        message: "Unhealthy air quality detected. Sensitive groups should limit outdoor activity.",
-        severity: "high",
-        time: "15 minutes ago",
-        icon: AlertTriangle,
-        category: "health",
-        location: "City-wide"
-      }
-    ];
-
-    // Randomly select 2-3 alerts from possible alerts
-    const numAdditionalAlerts = Math.floor(Math.random() * 2) + 2; // 2-3 alerts
-    const randomAlerts = [...possibleAlerts]
-      .sort(() => 0.5 - Math.random())
-      .slice(0, numAdditionalAlerts);
-    
-    const allAlerts = [...baseAlerts, ...randomAlerts]
-      .sort((a, b) => {
-        // Sort by severity (high > medium > low) and then by recency
-        const severityOrder = { high: 0, medium: 1, low: 2 };
-        if (a.severity !== b.severity) {
-          return severityOrder[a.severity as keyof typeof severityOrder] - 
-                 severityOrder[b.severity as keyof typeof severityOrder];
-        }
-        
-        // If same severity, sort by recency (just now > X minutes ago > X hours ago)
-        if (a.time.includes("Just now")) return -1;
-        if (b.time.includes("Just now")) return 1;
-        
-        // Extract minutes or hours
-        const aTime = parseInt(a.time) || 100;
-        const bTime = parseInt(b.time) || 100;
-        
-        if (a.time.includes("minute") && b.time.includes("hour")) return -1;
-        if (a.time.includes("hour") && b.time.includes("minute")) return 1;
-        
-        return aTime - bTime;
-      });
-
-    setRecentAlerts(allAlerts);
-    setIsLoading(false);
-  };
+  // Mock user location for sharing
+  const userLocation = "37.7749,-122.4194"; // San Francisco coordinates
 
   const handleSafetyCheck = () => {
     setMarkSafeOpen(true);
@@ -155,8 +66,10 @@ const Home = () => {
     setMarkSafeOpen(false);
     
     // Notify user's emergency contacts
-    toast.success("Marked Safe", {
+    toast({
+      title: "Marked Safe",
       description: "Your emergency contacts have been notified that you are safe",
+      duration: 3000,
     });
     
     // In a real app, this would make an API call to notify emergency contacts
@@ -232,7 +145,7 @@ const Home = () => {
           </div>
         </div>
         
-        {isLoading ? (
+        {alertsLoading ? (
           <div className="space-y-3">
             {[1, 2].map((item) => (
               <div 
@@ -247,12 +160,12 @@ const Home = () => {
               <AlertCard
                 key={alert.id}
                 title={alert.title}
-                message={alert.message}
+                message={alert.description}
                 severity={alert.severity}
-                time={alert.time}
-                icon={alert.icon}
+                time={new Date(alert.created_at).toLocaleString()}
+                icon={getAlertIcon(alert.type)}
                 location={alert.location}
-                category={alert.category}
+                category={alert.type}
                 onClick={() => navigate(`/app/alerts/${alert.id}`)}
               />
             ))}
@@ -286,5 +199,21 @@ const Home = () => {
     </div>
   );
 };
+
+// Helper function to map alert type to icon
+function getAlertIcon(type: string) {
+  switch (type?.toLowerCase()) {
+    case 'weather':
+      return CloudRain;
+    case 'police':
+      return Shield;
+    case 'fire':
+      return CloudLightning;
+    case 'health':
+      return Info;
+    default:
+      return AlertTriangle;
+  }
+}
 
 export default Home;
