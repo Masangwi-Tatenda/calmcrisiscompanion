@@ -17,39 +17,87 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { MapPin } from "lucide-react";
+import { useCreateReport } from "@/services/reportsService";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface ReportFormProps {
   children: React.ReactNode;
 }
 
 const ReportForm = ({ children }: ReportFormProps) => {
+  const { user } = useAuth();
+  const createReportMutation = useCreateReport();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [incidentType, setIncidentType] = useState("");
+  const [title, setTitle] = useState("");
   const [location, setLocation] = useState("");
   const [description, setDescription] = useState("");
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
 
-  const handleSubmit = (event: React.FormEvent) => {
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    
+    if (!user) {
+      toast.error("You need to be logged in to submit a report");
+      return;
+    }
+    
+    if (!incidentType || !title || !location || !description) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+    
     setIsSubmitting(true);
     
-    // Simulate form submission
-    setTimeout(() => {
+    try {
+      await createReportMutation.mutateAsync({
+        title,
+        description,
+        category: incidentType,
+        location,
+        latitude: latitude || undefined,
+        longitude: longitude || undefined,
+        is_public: true
+      });
+      
       toast.success("Report submitted successfully", {
         description: "Thank you for your report. Authorities have been notified."
       });
       
       // Reset form
       setIncidentType("");
+      setTitle("");
       setLocation("");
       setDescription("");
+      setLatitude(null);
+      setLongitude(null);
+    } catch (error) {
+      toast.error("Failed to submit report", {
+        description: error instanceof Error ? error.message : "An unknown error occurred"
+      });
+    } finally {
       setIsSubmitting(false);
-    }, 1500);
+    }
   };
 
   const handleUseCurrentLocation = () => {
-    // In a real app, this would use the browser's geolocation API
-    setLocation("Current location (37.7749, -122.4194)");
-    toast.info("Using your current location");
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setLatitude(position.coords.latitude);
+          setLongitude(position.coords.longitude);
+          setLocation("Current location");
+          toast.info("Using your current location");
+        },
+        (error) => {
+          console.error("Error getting location:", error);
+          toast.error("Could not get your location. Please enter it manually.");
+        }
+      );
+    } else {
+      toast.error("Geolocation is not supported by your browser");
+    }
   };
 
   return (
@@ -77,15 +125,25 @@ const ReportForm = ({ children }: ReportFormProps) => {
                 <SelectValue placeholder="Select incident type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="weather">Weather Emergency</SelectItem>
                 <SelectItem value="fire">Fire</SelectItem>
-                <SelectItem value="medical">Medical Emergency</SelectItem>
-                <SelectItem value="crime">Crime</SelectItem>
+                <SelectItem value="police">Police</SelectItem>
+                <SelectItem value="health">Medical Emergency</SelectItem>
+                <SelectItem value="weather">Weather Emergency</SelectItem>
                 <SelectItem value="traffic">Traffic Incident</SelectItem>
-                <SelectItem value="utility">Utility Outage</SelectItem>
                 <SelectItem value="other">Other</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="title">Title</Label>
+            <Input 
+              id="title" 
+              placeholder="Brief title for the incident" 
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              required
+            />
           </div>
           
           <div className="space-y-2">

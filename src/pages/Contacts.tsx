@@ -4,7 +4,7 @@ import { Phone, Plus, Search, Star, Users, Mail, Shield, Building, Heart } from 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { Dialog } from "@/components/ui/dialog";
 import AddContactForm from "@/components/contacts/AddContactForm";
 import { useNavigate } from "react-router-dom";
@@ -54,10 +54,9 @@ const Contacts = () => {
   }, [contacts, activeTab, searchQuery]);
 
   const handleCall = (contact: Contact) => {
-    toast({
-      title: `Calling ${contact.name}`,
+    toast.success(`Calling ${contact.name}`, {
       description: `Dialing ${contact.phone}...`,
-      duration: 3000, // Auto-dismiss after 3 seconds
+      duration: 3000,
     });
     
     // In a real mobile app, this would use a native API to initiate a call
@@ -66,18 +65,15 @@ const Contacts = () => {
   };
 
   const handleMessage = (contact: Contact) => {
-    toast({
-      title: `Message ${contact.name}`,
-      description: `Opening messaging for ${contact.phone}...`,
-      duration: 3000, // Auto-dismiss after 3 seconds
-    });
-    
-    // For personal contacts, navigate to chat
-    if (contact.type === "personal") {
-      navigate(`/app/chat?contact=${contact.name}&phone=${contact.phone}`);
+    if (contact.user_id === null) {
+      // For emergency contacts, show information
+      toast.info(`Emergency Contact`, {
+        description: `For emergencies, call ${contact.phone} directly.`,
+        duration: 3000,
+      });
     } else {
-      // For emergency/service contacts, use sms: protocol
-      window.location.href = `sms:${contact.phone.replace(/\D/g, '')}`;
+      // For personal contacts, navigate to chat
+      navigate(`/app/chat?contact=${contact.name}&phone=${contact.phone}`);
     }
   };
 
@@ -95,13 +91,18 @@ const Contacts = () => {
   const getIconForContactType = (type: string) => {
     switch (type) {
       case "emergency":
-        return <Shield className="h-5 w-5 text-primary" />;
+        return <Shield className="h-5 w-5 text-crisis-red" />;
       case "service":
         return <Building className="h-5 w-5 text-primary" />;
       case "personal":
       default:
         return <Users className="h-5 w-5 text-primary" />;
     }
+  };
+
+  // Determine if a contact is a system default (cannot be edited)
+  const isDefaultContact = (contact: Contact) => {
+    return contact.user_id === null;
   };
 
   if (error) {
@@ -167,46 +168,97 @@ const Contacts = () => {
           </div>
         ) : filteredContacts.length > 0 ? (
           <div>
-            {filteredContacts.map((contact) => (
-              <div
-                key={contact.id}
-                className="mb-3 p-4 bg-white rounded-lg shadow-subtle hover:shadow-card transition-shadow"
-              >
-                <div className="flex items-center">
-                  <div className="p-2 rounded-full bg-primary/10 mr-3">
-                    {getIconForContactType(contact.type)}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center">
-                      <h3 className="font-medium">{contact.name}</h3>
-                      {contact.is_favorite && (
-                        <Star className="h-3.5 w-3.5 text-yellow-500 ml-2 fill-current" />
-                      )}
+            {/* Emergency contacts section - always show first */}
+            {activeTab === "all" || activeTab === "emergency" ? (
+              <div className="mb-4">
+                {filteredContacts.some(contact => isDefaultContact(contact) && (activeTab === "all" || contact.type === activeTab)) && (
+                  <h3 className="text-sm font-medium text-muted-foreground mb-2">Emergency Services</h3>
+                )}
+                {filteredContacts
+                  .filter(contact => isDefaultContact(contact) && (activeTab === "all" || contact.type === activeTab))
+                  .map((contact) => (
+                    <div
+                      key={contact.id}
+                      className="mb-3 p-4 bg-gradient-to-r from-red-50 to-transparent rounded-lg shadow-subtle"
+                    >
+                      <div className="flex items-center">
+                        <div className="p-2 rounded-full bg-red-100 mr-3">
+                          <Shield className="h-5 w-5 text-crisis-red" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center">
+                            <h3 className="font-medium">{contact.name}</h3>
+                            <span className="ml-2 text-xs py-0.5 px-1.5 bg-red-100 text-crisis-red rounded-full">Official</span>
+                          </div>
+                          <p className="text-sm text-muted-foreground">{contact.phone}</p>
+                        </div>
+                        <div className="flex space-x-2">
+                          <button
+                            className="p-2 rounded-full bg-green-100 text-green-600"
+                            onClick={() => handleCall(contact)}
+                            aria-label={`Call ${contact.name}`}
+                          >
+                            <Phone className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
                     </div>
-                    <p className="text-sm text-muted-foreground">{contact.phone}</p>
-                    {contact.relationship && (
-                      <p className="text-xs text-muted-foreground">{contact.relationship}</p>
-                    )}
-                  </div>
-                  <div className="flex space-x-2">
-                    <button
-                      className="p-2 rounded-full bg-green-100 text-green-600"
-                      onClick={() => handleCall(contact)}
-                      aria-label={`Call ${contact.name}`}
-                    >
-                      <Phone className="h-4 w-4" />
-                    </button>
-                    <button
-                      className="p-2 rounded-full bg-blue-100 text-blue-600"
-                      onClick={() => handleMessage(contact)}
-                      aria-label={`Message ${contact.name}`}
-                    >
-                      <Mail className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
+                  ))}
               </div>
-            ))}
+            ) : null}
+
+            {/* User's personal contacts */}
+            {filteredContacts
+              .filter(contact => !isDefaultContact(contact) && (activeTab === "all" || contact.type === activeTab))
+              .length > 0 && (
+              <div>
+                {activeTab === "all" && (
+                  <h3 className="text-sm font-medium text-muted-foreground mb-2">Your Contacts</h3>
+                )}
+                {filteredContacts
+                  .filter(contact => !isDefaultContact(contact) && (activeTab === "all" || contact.type === activeTab))
+                  .map((contact) => (
+                    <div
+                      key={contact.id}
+                      className="mb-3 p-4 bg-white rounded-lg shadow-subtle hover:shadow-card transition-shadow"
+                    >
+                      <div className="flex items-center">
+                        <div className="p-2 rounded-full bg-primary/10 mr-3">
+                          {getIconForContactType(contact.type)}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center">
+                            <h3 className="font-medium">{contact.name}</h3>
+                            {contact.is_favorite && (
+                              <Star className="h-3.5 w-3.5 text-yellow-500 ml-2 fill-current" />
+                            )}
+                          </div>
+                          <p className="text-sm text-muted-foreground">{contact.phone}</p>
+                          {contact.relationship && (
+                            <p className="text-xs text-muted-foreground">{contact.relationship}</p>
+                          )}
+                        </div>
+                        <div className="flex space-x-2">
+                          <button
+                            className="p-2 rounded-full bg-green-100 text-green-600"
+                            onClick={() => handleCall(contact)}
+                            aria-label={`Call ${contact.name}`}
+                          >
+                            <Phone className="h-4 w-4" />
+                          </button>
+                          <button
+                            className="p-2 rounded-full bg-blue-100 text-blue-600"
+                            onClick={() => handleMessage(contact)}
+                            aria-label={`Message ${contact.name}`}
+                          >
+                            <Mail className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            )}
           </div>
         ) : (
           <div className="text-center py-12">

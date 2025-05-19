@@ -5,140 +5,62 @@ import AlertCard from "@/components/common/AlertCard";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate } from "react-router-dom";
-
-const mockAlertsBase = [
-  {
-    id: 1,
-    title: "Flash Flood Warning",
-    message: "Flash flood warning issued for your area. Avoid low-lying areas and stay indoors if possible.",
-    severity: "critical",
-    category: "weather",
-    time: "10 minutes ago",
-    location: "Downtown area, Riverside",
-  },
-  {
-    id: 2,
-    title: "High Wind Advisory",
-    message: "Strong winds expected with gusts up to 50mph. Secure outdoor items and be cautious when driving.",
-    severity: "medium",
-    category: "weather",
-    time: "1 hour ago",
-    location: "Entire county",
-  },
-  {
-    id: 3,
-    title: "Road Closure Alert",
-    message: "Highway 101 closed between exits 25-30 due to accident. Seek alternative routes.",
-    severity: "high",
-    category: "traffic",
-    time: "2 hours ago",
-    location: "Highway 101, exits 25-30",
-  },
-];
-
-const mockAlertsDynamic = [
-  {
-    id: 4,
-    title: "Power Outage",
-    message: "Power outage reported in downtown area. Crews working to restore service. Estimated restoration: 5PM.",
-    severity: "medium",
-    category: "utility",
-    time: "3 hours ago",
-    location: "Downtown district",
-  },
-  {
-    id: 5,
-    title: "Air Quality Alert",
-    message: "Unhealthy air quality levels detected. Sensitive groups should limit outdoor activities.",
-    severity: "low",
-    category: "health",
-    time: "Yesterday",
-    location: "City-wide",
-  },
-  {
-    id: 6,
-    title: "Water Main Break",
-    message: "Water service interrupted in eastern suburbs due to main break. Repairs underway.",
-    severity: "medium",
-    category: "utility",
-    time: "4 hours ago",
-    location: "Eastern suburbs",
-  },
-  {
-    id: 7,
-    title: "Gas Leak",
-    message: "Reported gas leak in northern district. Authorities responding. Avoid the area.",
-    severity: "high",
-    category: "utility",
-    time: "30 minutes ago",
-    location: "Northern district",
-  },
-  {
-    id: 8,
-    title: "Wildfire Warning",
-    message: "Wildfire reported in western hills. Evacuation notices may follow. Stay alert.",
-    severity: "critical",
-    category: "weather",
-    time: "15 minutes ago",
-    location: "Western hills region",
-  },
-  {
-    id: 9,
-    title: "School Closure",
-    message: "All public schools closed tomorrow due to severe weather forecast.",
-    severity: "medium",
-    category: "health",
-    time: "2 hours ago",
-    location: "All districts",
-  },
-];
+import { useGetAlerts, useSubscribeToAlerts, Alert } from "@/services/alertsService";
+import { toast } from "sonner";
 
 const Alerts = () => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [alerts, setAlerts] = useState<any[]>([]);
-  const [filteredAlerts, setFilteredAlerts] = useState<any[]>([]);
+  const { data: alertsData, isLoading, error } = useGetAlerts();
+  const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [filteredAlerts, setFilteredAlerts] = useState<Alert[]>([]);
   const [severityFilter, setSeverityFilter] = useState("all");
   const [activeTab, setActiveTab] = useState("all");
   const navigate = useNavigate();
   
-  const fetchAlerts = () => {
-    // In a real app, this would be an API call
-    // We'll simulate dynamic alerts by selecting some random alerts to show
-    
-    const randomCount = Math.floor(Math.random() * 3) + 2; // 2-4 alerts
-    const selectedDynamicAlerts = [...mockAlertsDynamic]
-      .sort(() => 0.5 - Math.random())
-      .slice(0, randomCount);
-    
-    // Update time for one random alert to "Just now" to simulate real-time updates
-    if (selectedDynamicAlerts.length > 0) {
-      const randomIndex = Math.floor(Math.random() * selectedDynamicAlerts.length);
-      selectedDynamicAlerts[randomIndex].time = "Just now";
-    }
-    
-    const allAlerts = [...mockAlertsBase, ...selectedDynamicAlerts];
-    setAlerts(allAlerts);
-    setIsLoading(false);
-  };
-
+  // Set alerts when data is loaded
   useEffect(() => {
-    // Initial fetch
-    fetchAlerts();
-    
-    // Set up interval for real-time updates (every 25 seconds)
-    const interval = setInterval(() => {
-      fetchAlerts();
-    }, 25000);
-    
-    return () => clearInterval(interval);
-  }, []);
+    if (alertsData) {
+      setAlerts(alertsData);
+    }
+  }, [alertsData]);
 
+  // Subscribe to new alerts
+  useEffect(() => {
+    const unsubscribe = useSubscribeToAlerts((newAlert) => {
+      setAlerts(prevAlerts => {
+        // Check if alert already exists to prevent duplicates
+        if (prevAlerts.some(alert => alert.id === newAlert.id)) {
+          return prevAlerts;
+        }
+        
+        // Add new alert and sort by creation date
+        const updatedAlerts = [newAlert, ...prevAlerts]
+          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        
+        // Show toast notification for new alert
+        toast.info(`New ${newAlert.source === 'user-reported' ? 'User Report' : 'Alert'}: ${newAlert.title}`, {
+          description: newAlert.description.substring(0, 50) + (newAlert.description.length > 50 ? '...' : ''),
+          action: {
+            label: 'View',
+            onClick: () => navigate(`/app/alerts/${newAlert.id}`),
+          },
+        });
+        
+        return updatedAlerts;
+      });
+    });
+    
+    return () => {
+      unsubscribe();
+    };
+  }, [navigate]);
+
+  // Apply filters
   useEffect(() => {
     let result = [...alerts];
     
     // Apply category filter
     if (activeTab !== "all") {
-      result = result.filter(alert => alert.category === activeTab);
+      result = result.filter(alert => alert.type === activeTab);
     }
     
     // Apply severity filter
@@ -149,9 +71,33 @@ const Alerts = () => {
     setFilteredAlerts(result);
   }, [alerts, activeTab, severityFilter]);
 
-  const handleViewAlert = (alertId: number) => {
+  const handleViewAlert = (alertId: string) => {
     navigate(`/app/alerts/${alertId}`);
   };
+
+  if (error) {
+    return (
+      <div className="flex flex-col h-full">
+        <div className="page-header border-b border-border">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center">
+              <Bell className="h-5 w-5 mr-2" />
+              <h1 className="text-xl font-bold">Alerts</h1>
+            </div>
+          </div>
+        </div>
+        <div className="page-container">
+          <div className="text-center py-12">
+            <Bell className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-1">Error Loading Alerts</h3>
+            <p className="text-muted-foreground">
+              {error instanceof Error ? error.message : "Failed to load alerts"}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full">
@@ -191,10 +137,11 @@ const Alerts = () => {
           className="mt-4"
           defaultValue="all"
         >
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="all">All</TabsTrigger>
             <TabsTrigger value="weather">Weather</TabsTrigger>
-            <TabsTrigger value="traffic">Traffic</TabsTrigger>
+            <TabsTrigger value="fire">Fire</TabsTrigger>
+            <TabsTrigger value="police">Police</TabsTrigger>
             <TabsTrigger value="health">Health</TabsTrigger>
           </TabsList>
         </Tabs>
@@ -215,12 +162,12 @@ const Alerts = () => {
             {filteredAlerts.map((alert) => (
               <AlertCard
                 key={alert.id}
-                id={alert.id}
+                id={parseInt(alert.id)} // This should be changed to accept string IDs
                 title={alert.title}
-                message={alert.message}
-                severity={alert.severity}
-                time={alert.time}
-                category={alert.category}
+                message={alert.description}
+                severity={alert.severity as any}
+                time={formatTimestamp(alert.created_at)}
+                category={alert.type}
                 location={alert.location}
                 onClick={() => handleViewAlert(alert.id)}
               />
@@ -241,5 +188,26 @@ const Alerts = () => {
     </div>
   );
 };
+
+function formatTimestamp(timestamp: string): string {
+  const date = new Date(timestamp);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHours / 24);
+  
+  if (diffMins < 1) {
+    return "Just now";
+  } else if (diffMins < 60) {
+    return `${diffMins} minute${diffMins === 1 ? '' : 's'} ago`;
+  } else if (diffHours < 24) {
+    return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;
+  } else if (diffDays < 7) {
+    return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
+  } else {
+    return date.toLocaleDateString();
+  }
+}
 
 export default Alerts;

@@ -1,34 +1,93 @@
 
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, AlertTriangle, Camera, MapPin, FileText, AlertCircle } from "lucide-react";
+import { ArrowLeft, AlertTriangle, Camera, MapPin, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import LocationMap from "@/components/common/LocationMap";
 import { useState } from "react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { useCreateReport } from "@/services/reportsService";
+import { useAuth } from "@/contexts/AuthContext";
 
 const ReportIncident = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const createReportMutation = useCreateReport();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [location, setLocation] = useState("");
   const [useCurrentLocation, setUseCurrentLocation] = useState(true);
+  const [incidentType, setIncidentType] = useState("weather");
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!user) {
+      toast.error("You need to be logged in to submit a report");
+      return;
+    }
+    
+    if (!title || !location || !description) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+    
     setIsSubmitting(true);
     
-    // Simulate form submission
-    setTimeout(() => {
+    try {
+      await createReportMutation.mutateAsync({
+        title,
+        description,
+        category: incidentType,
+        location,
+        latitude: latitude || undefined,
+        longitude: longitude || undefined,
+        is_public: true
+      });
+      
       toast.success("Report submitted successfully", {
         description: "Thank you for your report. Authorities have been notified."
       });
       navigate("/app");
-    }, 2000);
+    } catch (error) {
+      toast.error("Failed to submit report", {
+        description: error instanceof Error ? error.message : "An unknown error occurred"
+      });
+      setIsSubmitting(false);
+    }
   };
+
+  const getCurrentLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setLatitude(position.coords.latitude);
+          setLongitude(position.coords.longitude);
+        },
+        (error) => {
+          console.error("Error getting location:", error);
+          toast.error("Could not get your location. Please enter it manually.");
+          setUseCurrentLocation(false);
+        }
+      );
+    } else {
+      toast.error("Geolocation is not supported by your browser");
+      setUseCurrentLocation(false);
+    }
+  };
+  
+  // Get current location on component mount if using current location
+  useState(() => {
+    if (useCurrentLocation) {
+      getCurrentLocation();
+    }
+  });
   
   return (
     <div className="flex flex-col h-full">
@@ -57,7 +116,12 @@ const ReportIncident = () => {
         <form onSubmit={handleSubmit} className="space-y-6 pb-24">
           <div className="space-y-4">
             <Label className="text-base font-medium">Incident Type</Label>
-            <RadioGroup defaultValue="weather" className="grid grid-cols-2 gap-2">
+            <RadioGroup 
+              defaultValue="weather" 
+              value={incidentType}
+              onValueChange={setIncidentType}
+              className="grid grid-cols-2 gap-2"
+            >
               <Label htmlFor="weather" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground [&:has([data-state=checked])]:border-primary">
                 <RadioGroupItem value="weather" id="weather" className="sr-only" />
                 <AlertCircle className="mb-3 h-6 w-6" />
@@ -68,8 +132,8 @@ const ReportIncident = () => {
                 <span className="text-2xl mb-2">🔥</span>
                 <span className="text-sm">Fire</span>
               </Label>
-              <Label htmlFor="medical" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground [&:has([data-state=checked])]:border-primary">
-                <RadioGroupItem value="medical" id="medical" className="sr-only" />
+              <Label htmlFor="health" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground [&:has([data-state=checked])]:border-primary">
+                <RadioGroupItem value="health" id="health" className="sr-only" />
                 <span className="text-2xl mb-2">🏥</span>
                 <span className="text-sm">Medical</span>
               </Label>
@@ -83,7 +147,13 @@ const ReportIncident = () => {
           
           <div className="space-y-2">
             <Label htmlFor="title">Title</Label>
-            <Input id="title" placeholder="Brief description of the incident" required />
+            <Input 
+              id="title" 
+              placeholder="Brief description of the incident" 
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              required 
+            />
           </div>
           
           <div className="space-y-2">
@@ -92,6 +162,8 @@ const ReportIncident = () => {
               id="description" 
               placeholder="Provide details about the incident" 
               className="min-h-[100px]"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
               required
             />
           </div>
@@ -105,7 +177,12 @@ const ReportIncident = () => {
                   type="button"
                   className={`relative h-5 w-10 rounded-full transition-colors
                     ${useCurrentLocation ? 'bg-primary' : 'bg-muted'}`}
-                  onClick={() => setUseCurrentLocation(!useCurrentLocation)}
+                  onClick={() => {
+                    setUseCurrentLocation(!useCurrentLocation);
+                    if (!useCurrentLocation) {
+                      getCurrentLocation();
+                    }
+                  }}
                 >
                   <span 
                     className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white transition-transform
@@ -125,6 +202,7 @@ const ReportIncident = () => {
                   placeholder="Enter address or description of location" 
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
+                  required
                 />
               </div>
             )}

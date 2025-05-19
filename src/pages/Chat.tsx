@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSendMessage, useGetMessages, useSubscribeToMessages, Message } from "@/services/messagesService";
+import { toast } from "sonner";
 
 const Chat = () => {
   const navigate = useNavigate();
@@ -28,13 +29,17 @@ const Chat = () => {
   // Subscribe to new messages
   useEffect(() => {
     const unsubscribe = useSubscribeToMessages(chatRoomId, (newMessage) => {
-      setMessages(prevMessages => [...prevMessages, newMessage]);
+      // Only add if it's not from the current user to avoid duplicates
+      // (since we're optimistically adding sent messages)
+      if (newMessage.sender_id !== user?.id) {
+        setMessages(prevMessages => [...prevMessages, newMessage]);
+      }
     });
     
     return () => {
       unsubscribe();
     };
-  }, [chatRoomId]);
+  }, [chatRoomId, user]);
 
   // Set messages when loaded from Supabase
   useEffect(() => {
@@ -56,17 +61,34 @@ const Chat = () => {
     if (!newMessage.trim() || !user) return;
 
     try {
+      // Optimistically add the message to the UI
+      const optimisticMessage: Message = {
+        id: `temp-${Date.now()}`,
+        sender_id: user.id,
+        recipient_id: contactPhone ? undefined : null,
+        chat_room_id: chatRoomId,
+        is_group_message: isGroupChat,
+        message_text: newMessage,
+        created_at: new Date().toISOString(),
+      };
+      
+      setMessages(prevMessages => [...prevMessages, optimisticMessage]);
+      setNewMessage("");
+
+      // Send the actual message
       const messageToSend = {
         sender_id: user.id,
-        recipient_id: null,
+        recipient_id: contactPhone ? undefined : null,
         chat_room_id: chatRoomId,
         is_group_message: isGroupChat,
         message_text: newMessage
       };
 
       await sendMessageMutation.mutateAsync(messageToSend);
-      setNewMessage("");
     } catch (error) {
+      toast.error("Failed to send message", {
+        description: error instanceof Error ? error.message : "An unknown error occurred"
+      });
       console.error("Failed to send message:", error);
     }
   };
@@ -141,7 +163,7 @@ const Chat = () => {
               </div>
             ) : (
               <div className="space-y-4 pb-20">
-                {messages.map((message) => (
+                {messages.map((message, index) => (
                   <div
                     key={message.id}
                     className={`flex ${

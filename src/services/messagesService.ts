@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 export interface Message {
   id: string;
   sender_id: string;
-  recipient_id?: string;
+  recipient_id?: string | null;
   is_group_message: boolean;
   chat_room_id?: string;
   message_text: string;
@@ -17,7 +17,7 @@ export const useGetMessages = (chatRoomId?: string, recipientId?: string) => {
     queryKey: ['messages', chatRoomId, recipientId],
     queryFn: async () => {
       let query = supabase
-        .from('messages' as any)
+        .from('messages')
         .select('*')
         .order('created_at', { ascending: true });
 
@@ -38,7 +38,7 @@ export const useGetMessages = (chatRoomId?: string, recipientId?: string) => {
         throw new Error(error.message);
       }
       
-      return data as unknown as Message[];
+      return data as Message[];
     },
     enabled: !!chatRoomId || !!recipientId, // Only run query when either parameter is provided
   });
@@ -60,7 +60,7 @@ export const useSendMessage = () => {
       };
       
       const { data, error } = await supabase
-        .from('messages' as any)
+        .from('messages')
         .insert(validatedMessage)
         .select();
       
@@ -68,7 +68,7 @@ export const useSendMessage = () => {
         throw new Error(error.message);
       }
       
-      return (data[0] || {}) as unknown as Message;
+      return (data[0] || {}) as Message;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
@@ -92,7 +92,7 @@ export const useSubscribeToMessages = (
         filter: chatRoomId ? `chat_room_id=eq.${chatRoomId}` : undefined
       },
       (payload) => {
-        callback(payload.new as unknown as Message);
+        callback(payload.new as Message);
       }
     )
     .subscribe();
