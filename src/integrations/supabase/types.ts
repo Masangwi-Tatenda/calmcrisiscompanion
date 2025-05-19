@@ -78,6 +78,39 @@ export type Database = {
         }
         Relationships: []
       }
+      contacts: {
+        Row: {
+          created_at: string
+          id: string
+          is_favorite: boolean | null
+          name: string
+          phone: string
+          relationship: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_favorite?: boolean | null
+          name: string
+          phone: string
+          relationship?: string | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_favorite?: boolean | null
+          name?: string
+          phone?: string
+          relationship?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           address: string | null

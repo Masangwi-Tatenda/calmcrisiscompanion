@@ -12,6 +12,9 @@ interface ProfileData {
   city?: string | null;
   state?: string | null;
   created_at?: string;
+  // Additional user metadata from auth
+  email?: string | null;
+  display_name?: string | null;
 }
 
 export function useProfileData() {
@@ -22,21 +25,26 @@ export function useProfileData() {
     queryFn: async (): Promise<ProfileData | null> => {
       if (!user) return null;
       
-      const { data, error } = await supabase
+      // Fetch profile data
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
         .single();
       
-      if (error) {
-        if (error.code === 'PGRST116') {
-          // No profile found
-          return null;
-        }
-        throw new Error(error.message);
+      if (profileError && profileError.code !== 'PGRST116') {
+        throw new Error(profileError.message);
       }
       
-      return data;
+      // Get user metadata
+      const { data: { user: userData } } = await supabase.auth.getUser();
+      
+      // Merge profile data with user metadata
+      return {
+        ...(profileData || { id: user.id }),
+        email: user.email,
+        display_name: userData?.user_metadata?.full_name || userData?.user_metadata?.name || null
+      } as ProfileData;
     },
     enabled: !!user,
   });

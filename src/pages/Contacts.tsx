@@ -1,10 +1,9 @@
+
 import { useState, useEffect } from "react";
-import React from "react"; // Added explicit React import
 import { Phone, Plus, Search, Star, Users, Mail, Shield, Building, Heart } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import ContactCard from "@/components/common/ContactCard";
 import { toast } from "@/components/ui/use-toast";
 import { Dialog } from "@/components/ui/dialog";
 import AddContactForm from "@/components/contacts/AddContactForm";
@@ -15,7 +14,7 @@ import { useAuth } from "@/contexts/AuthContext";
 const Contacts = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { data: contactsData, isLoading } = useGetContacts();
+  const { data: contactsData, isLoading, error } = useGetContacts();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [filteredContacts, setFilteredContacts] = useState<Contact[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -86,23 +85,37 @@ const Contacts = () => {
     setIsAddContactOpen(true);
   };
 
-  const addNewContact = (newContact: any) => {
-    // ContactForm component will handle the actual saving to Supabase
+  const addNewContact = (newContact: Contact) => {
+    // Contact is added to database by the AddContactForm component
     setIsAddContactOpen(false);
+    // Update local state only if needed - handled by useGetContacts invalidation
   };
 
   // Map contact.type to icon component
-  const getIconForType = (type: string) => {
+  const getIconForContactType = (type: string) => {
     switch (type) {
       case "emergency":
-        return Shield;
+        return <Shield className="h-5 w-5 text-primary" />;
       case "service":
-        return Building;
+        return <Building className="h-5 w-5 text-primary" />;
       case "personal":
       default:
-        return Users;
+        return <Users className="h-5 w-5 text-primary" />;
     }
   };
+
+  if (error) {
+    return (
+      <div className="page-container flex flex-col items-center justify-center py-12">
+        <Shield className="h-12 w-12 text-destructive mb-4" />
+        <h2 className="text-xl font-semibold mb-2">Error Loading Contacts</h2>
+        <p className="text-muted-foreground text-center mb-4">
+          {error instanceof Error ? error.message : "Failed to load contacts"}
+        </p>
+        <Button onClick={() => window.location.reload()}>Try Again</Button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full">
@@ -161,12 +174,7 @@ const Contacts = () => {
               >
                 <div className="flex items-center">
                   <div className="p-2 rounded-full bg-primary/10 mr-3">
-                    {contact.type === "emergency" ? 
-                      <Shield className="h-5 w-5 text-primary" /> : 
-                      contact.type === "service" ? 
-                        <Building className="h-5 w-5 text-primary" /> : 
-                        <Users className="h-5 w-5 text-primary" />
-                    }
+                    {getIconForContactType(contact.type)}
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center">

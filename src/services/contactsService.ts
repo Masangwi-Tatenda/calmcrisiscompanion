@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/contexts/AuthContext";
 
 export interface Contact {
   id: string;
@@ -13,26 +14,18 @@ export interface Contact {
   user_id?: string;
 }
 
-// Type for what we get from the database
-interface ContactFromDB {
-  id: string;
-  name: string;
-  phone: string;
-  relationship?: string;
-  type: string;
-  is_favorite: boolean;
-  created_at: string;
-  user_id: string;
-}
-
 export const useGetContacts = () => {
+  const { user } = useAuth();
+  
   return useQuery({
     queryKey: ['contacts'],
     queryFn: async () => {
-      // Type assertion to work with the database schema
+      if (!user) return [];
+      
       const { data, error } = await supabase
-        .from('contacts' as any)
+        .from('contacts')
         .select('*')
+        .eq('user_id', user.id)
         .order('is_favorite', { ascending: false })
         .order('created_at', { ascending: false });
       
@@ -40,30 +33,29 @@ export const useGetContacts = () => {
         throw new Error(error.message);
       }
       
-      // Cast the data to our Contact interface
-      return (data || []) as unknown as Contact[];
+      return data as Contact[];
     },
+    enabled: !!user,
   });
 };
 
 export const useCreateContact = () => {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   
   return useMutation({
-    mutationFn: async (contact: Omit<Contact, 'id' | 'created_at'>) => {
-      // Get current user ID
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) throw new Error("User not authenticated");
+    mutationFn: async (contact: Omit<Contact, 'id' | 'created_at' | 'user_id'>) => {
+      if (!user) throw new Error("User not authenticated");
       
       // Create the contact with the user_id
       const newContact = {
         ...contact,
-        user_id: session.user.id,
+        user_id: user.id,
       };
       
       const { data, error } = await supabase
-        .from('contacts' as any)
-        .insert(newContact as any)
+        .from('contacts')
+        .insert(newContact)
         .select()
         .single();
       
@@ -71,7 +63,7 @@ export const useCreateContact = () => {
         throw new Error(error.message);
       }
       
-      return data as unknown as Contact;
+      return data as Contact;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -87,8 +79,8 @@ export const useUpdateContact = () => {
   return useMutation({
     mutationFn: async (contact: Partial<Contact> & { id: string }) => {
       const { data, error } = await supabase
-        .from('contacts' as any)
-        .update(contact as any)
+        .from('contacts')
+        .update(contact)
         .eq('id', contact.id)
         .select()
         .single();
@@ -97,7 +89,7 @@ export const useUpdateContact = () => {
         throw new Error(error.message);
       }
       
-      return data as unknown as Contact;
+      return data as Contact;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -113,7 +105,7 @@ export const useDeleteContact = () => {
   return useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from('contacts' as any)
+        .from('contacts')
         .delete()
         .eq('id', id);
       

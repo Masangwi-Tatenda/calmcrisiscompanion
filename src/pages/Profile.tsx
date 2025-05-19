@@ -8,12 +8,13 @@ import { toast } from "@/components/ui/use-toast";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useGetProfile } from "@/services/profileService";
+import { useProfileData } from "@/hooks/use-profile-data";
 
 const Profile = () => {
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
   const { signOut, user } = useAuth();
-  const { data: profileData, isLoading: profileLoading } = useGetProfile();
+  const { profileData, isLoading: profileLoading } = useProfileData();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   
   const [notificationSettings, setNotificationSettings] = useState({
@@ -35,8 +36,21 @@ const Profile = () => {
 
   useEffect(() => {
     if (profileData) {
+      // Extract user metadata from auth or profile data
+      const firstName = profileData.first_name || '';
+      const lastName = profileData.last_name || '';
+      const displayName = profileData.display_name || '';
+      
+      // Build user name with preference for display_name, then first_name + last_name
+      const name = displayName || 
+                  (firstName || lastName ? `${firstName} ${lastName}`.trim() : 
+                  user?.user_metadata?.full_name || 
+                  user?.user_metadata?.name ||
+                  user?.email?.split('@')[0] || 
+                  'User');
+      
       setUserProfile({
-        name: `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim() || 'User',
+        name: name,
         location: profileData.city ? `${profileData.city}, ${profileData.state || ''}`.trim() : 'No location set',
         phone: profileData.phone || 'No phone set',
         email: user?.email || 'No email set',

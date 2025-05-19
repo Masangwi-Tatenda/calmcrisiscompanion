@@ -48,7 +48,7 @@ const AddContactForm = ({ onClose, onAddContact }: AddContactFormProps) => {
         is_favorite: isFavorite
       };
 
-      await createContactMutation.mutateAsync(newContact);
+      const createdContact = await createContactMutation.mutateAsync(newContact);
 
       toast({
         title: "Contact added",
@@ -56,7 +56,7 @@ const AddContactForm = ({ onClose, onAddContact }: AddContactFormProps) => {
         duration: 3000,
       });
 
-      onAddContact(newContact);
+      onAddContact(createdContact);
       onClose();
     } catch (error: any) {
       toast({

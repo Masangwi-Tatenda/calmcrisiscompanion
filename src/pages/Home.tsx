@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Bell, MapPin, FileText, Phone, MessageCircle, Shield, AlertTriangle, Cloud, CloudRain, CloudLightning, Info } from "lucide-react";
@@ -25,7 +24,13 @@ const Home = () => {
   // Set user name from profile data
   useEffect(() => {
     if (profileData) {
-      const name = profileData.first_name || user?.email?.split('@')[0] || 'User';
+      // Use display_name from auth if available, otherwise fallback to first_name or email
+      const name = profileData.display_name || 
+                  profileData.first_name || 
+                  user?.user_metadata?.full_name || 
+                  user?.user_metadata?.name || 
+                  user?.email?.split('@')[0] || 
+                  'User';
       setUserName(name);
     }
   }, [profileData, user]);
