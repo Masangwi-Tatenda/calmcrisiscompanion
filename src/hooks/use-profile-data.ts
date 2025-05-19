@@ -12,6 +12,8 @@ interface ProfileData {
   city?: string | null;
   state?: string | null;
   created_at?: string;
+  address?: string | null;
+  allergies?: string | null;
   // Additional user metadata from auth
   email?: string | null;
   display_name?: string | null;
