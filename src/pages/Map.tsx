@@ -1,10 +1,18 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ArrowLeft, Building, Heart, MapPin, Navigation, Phone, Search, Shield } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
+
+// Add type declarations for Google Maps
+declare global {
+  interface Window {
+    google: any;
+    initMap: () => void;
+  }
+}
 
 // Mock emergency locations for Chinhoyi, Zimbabwe
 const emergencyLocations = [
@@ -91,78 +99,82 @@ const Map = () => {
   const [mapLoaded, setMapLoaded] = useState(false);
   const [map, setMap] = useState<any>(null);
   const [markers, setMarkers] = useState<any[]>([]);
+  const mapRef = useRef<HTMLDivElement>(null);
 
   // Initialize Google Maps
   useEffect(() => {
-    const script = document.createElement('script');
-    // In a real implementation, you'd use an environment variable for the API key
-    script.src = `https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places`;
-    script.async = true;
-    script.defer = true;
-    script.onload = () => {
+    // Define the global callback for the script
+    window.initMap = () => {
       setMapLoaded(true);
     };
+    
+    const script = document.createElement('script');
+    // In a real implementation, you'd use an environment variable for the API key
+    script.src = `https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places&callback=initMap`;
+    script.async = true;
+    script.defer = true;
     document.head.appendChild(script);
 
     return () => {
-      document.head.removeChild(script);
+      // Clean up the global callback
+      window.initMap = () => {};
+      // Remove the script tag if component unmounts before loading completes
+      if (document.head.contains(script)) {
+        document.head.removeChild(script);
+      }
     };
   }, []);
 
   // Initialize map when loaded
   useEffect(() => {
-    if (mapLoaded && !map) {
-      const mapElement = document.getElementById('emergency-map');
+    if (mapLoaded && !map && mapRef.current) {
+      // Chinhoyi, Zimbabwe coordinates
+      const chinhoiPosition = { lat: -17.3667, lng: 30.2 };
       
-      if (mapElement) {
-        // Chinhoyi, Zimbabwe coordinates
-        const chinhoiPosition = { lat: -17.3667, lng: 30.2 };
-        
-        const newMap = new window.google.maps.Map(mapElement, {
-          center: chinhoiPosition,
-          zoom: 14,
-          streetViewControl: false,
-          mapTypeControl: false
+      const newMap = new window.google.maps.Map(mapRef.current, {
+        center: chinhoiPosition,
+        zoom: 14,
+        streetViewControl: false,
+        mapTypeControl: false
+      });
+      
+      setMap(newMap);
+      
+      // Add emergency locations markers
+      const newMarkers = emergencyLocations.map(location => {
+        const marker = new window.google.maps.Marker({
+          position: location.position,
+          map: newMap,
+          title: location.name,
+          icon: {
+            url: getMarkerIconUrl(location.category),
+            scaledSize: new window.google.maps.Size(32, 32)
+          }
         });
         
-        setMap(newMap);
-        
-        // Add emergency locations markers
-        const newMarkers = emergencyLocations.map(location => {
-          const marker = new window.google.maps.Marker({
-            position: location.position,
-            map: newMap,
-            title: location.name,
-            icon: {
-              url: getMarkerIconUrl(location.category),
-              scaledSize: new window.google.maps.Size(32, 32)
-            }
-          });
-          
-          // Add click listener
-          marker.addListener('click', () => {
-            setSelectedLocation(location);
-          });
-          
-          return { marker, location };
+        // Add click listener
+        marker.addListener('click', () => {
+          setSelectedLocation(location);
         });
         
-        setMarkers(newMarkers);
-        
-        // Add alert zones as circles
-        alertZones.forEach(zone => {
-          new window.google.maps.Circle({
-            strokeColor: getAlertColor(zone.severity),
-            strokeOpacity: 0.8,
-            strokeWeight: 2,
-            fillColor: getAlertColor(zone.severity),
-            fillOpacity: 0.35,
-            map: newMap,
-            center: zone.position,
-            radius: zone.radius
-          });
+        return { marker, location };
+      });
+      
+      setMarkers(newMarkers);
+      
+      // Add alert zones as circles
+      alertZones.forEach(zone => {
+        new window.google.maps.Circle({
+          strokeColor: getAlertColor(zone.severity),
+          strokeOpacity: 0.8,
+          strokeWeight: 2,
+          fillColor: getAlertColor(zone.severity),
+          fillOpacity: 0.35,
+          map: newMap,
+          center: zone.position,
+          radius: zone.radius
         });
-      }
+      });
     }
   }, [mapLoaded, map]);
 
@@ -288,7 +300,7 @@ const Map = () => {
       </div>
 
       <div className="flex-1 grid md:grid-cols-2 gap-4 p-4">
-        <div id="emergency-map" className="h-[400px] md:h-full rounded-lg overflow-hidden border border-border order-2 md:order-1">
+        <div id="emergency-map" ref={mapRef} className="h-[400px] md:h-full rounded-lg overflow-hidden border border-border order-2 md:order-1">
           {!mapLoaded && (
             <div className="h-full flex items-center justify-center bg-muted">
               <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
