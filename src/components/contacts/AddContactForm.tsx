@@ -1,132 +1,198 @@
 
 import { useState } from "react";
-import { DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
-import { toast } from "@/components/ui/use-toast";
-import { useCreateContact } from "@/services/contactsService";
+import { toast } from "sonner";
+import { useCreateContact, Contact } from "@/services/contactsService";
 
 interface AddContactFormProps {
   onClose: () => void;
-  onAddContact: (contact: any) => void;
+  onAddContact: (contact: Contact) => void;
+  initialValues?: Partial<Contact>;
+  isEmergencyContact?: boolean;
 }
 
-const AddContactForm = ({ onClose, onAddContact }: AddContactFormProps) => {
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [relationship, setRelationship] = useState("");
-  const [type, setType] = useState("personal");
-  const [isFavorite, setIsFavorite] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
+const AddContactForm = ({
+  onClose,
+  onAddContact,
+  initialValues,
+  isEmergencyContact = false,
+}: AddContactFormProps) => {
   const createContactMutation = useCreateContact();
-
+  
+  const [name, setName] = useState(initialValues?.name || "");
+  const [phone, setPhone] = useState(initialValues?.phone || "");
+  const [email, setEmail] = useState(initialValues?.email || "");
+  const [relationship, setRelationship] = useState(initialValues?.relationship || "");
+  const [contactType, setContactType] = useState<string>(initialValues?.type || "personal");
+  const [isFavorite, setIsFavorite] = useState(initialValues?.is_favorite || isEmergencyContact || false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
+    
     if (!name || !phone) {
-      toast({
-        title: "Required fields missing",
-        description: "Please fill in name and phone number",
-        variant: "destructive",
-        duration: 3000,
-      });
+      toast.error("Name and phone number are required");
       return;
     }
-
+    
+    // Basic phone validation
+    const phoneRegex = /^[+\d\s()-]{7,20}$/;
+    if (!phoneRegex.test(phone)) {
+      toast.error("Please enter a valid phone number");
+      return;
+    }
+    
+    // Email validation (if provided)
+    if (email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        toast.error("Please enter a valid email address");
+        return;
+      }
+    }
+    
     setIsSubmitting(true);
-
+    
     try {
-      const newContact = {
+      const newContact = await createContactMutation.mutateAsync({
         name,
         phone,
+        email,
         relationship,
-        type,
-        is_favorite: isFavorite
-      };
-
-      const createdContact = await createContactMutation.mutateAsync(newContact);
-
-      toast({
-        title: "Contact added",
-        description: `${name} has been added to your contacts`,
-        duration: 3000,
+        type: contactType,
+        is_favorite: isFavorite,
+        is_emergency_contact: isEmergencyContact,
       });
-
-      onAddContact(createdContact);
+      
+      toast.success("Contact added successfully");
+      onAddContact(newContact);
       onClose();
-    } catch (error: any) {
-      toast({
-        title: "Failed to add contact",
-        description: error.message || "An error occurred",
-        variant: "destructive",
-        duration: 3000,
+    } catch (error) {
+      toast.error("Failed to add contact", {
+        description: error instanceof Error ? error.message : "An unexpected error occurred"
       });
-    } finally {
       setIsSubmitting(false);
     }
   };
-
+  
   return (
     <DialogContent className="sm:max-w-[425px]">
       <DialogHeader>
-        <DialogTitle>Add New Contact</DialogTitle>
+        <DialogTitle>{isEmergencyContact ? "Add Emergency Contact" : "Add New Contact"}</DialogTitle>
+        <DialogDescription>
+          {isEmergencyContact 
+            ? "Add someone who should be contacted in case of emergency."
+            : "Add a new contact to your address book."}
+        </DialogDescription>
       </DialogHeader>
+      
       <form onSubmit={handleSubmit} className="space-y-4 pt-4">
         <div className="space-y-2">
-          <Label htmlFor="name">Name</Label>
-          <Input 
+          <Label htmlFor="name" className="text-right">
+            Full Name
+          </Label>
+          <Input
             id="name"
-            placeholder="Enter name" 
             value={name}
             onChange={(e) => setName(e.target.value)}
+            placeholder="Enter contact name"
+            required
           />
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="phone">Phone Number</Label>
-          <Input 
+          <Label htmlFor="phone" className="text-right">
+            Phone Number
+          </Label>
+          <Input
             id="phone"
-            placeholder="Enter phone number" 
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
+            placeholder="Enter phone number"
+            type="tel"
+            required
           />
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="relationship">Relationship (optional)</Label>
-          <Input 
-            id="relationship"
-            placeholder="Family, Friend, Coworker, etc." 
+          <Label htmlFor="email" className="text-right">
+            Email Address
+          </Label>
+          <Input
+            id="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Enter email address"
+            type="email"
+          />
+          <p className="text-xs text-muted-foreground">
+            {isEmergencyContact 
+              ? "Email is required for emergency notifications"
+              : "Optional - Used for communication and alerts"}
+          </p>
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="relationship" className="text-right">
+            Relationship
+          </Label>
+          <Select
             value={relationship}
-            onChange={(e) => setRelationship(e.target.value)}
-          />
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="type">Contact Type</Label>
-          <Select value={type} onValueChange={setType}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select type" />
+            onValueChange={setRelationship}
+          >
+            <SelectTrigger id="relationship">
+              <SelectValue placeholder="Select relationship" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="personal">Personal</SelectItem>
-              <SelectItem value="emergency">Emergency</SelectItem>
-              <SelectItem value="service">Service</SelectItem>
+              <SelectItem value="family">Family</SelectItem>
+              <SelectItem value="friend">Friend</SelectItem>
+              <SelectItem value="spouse">Spouse</SelectItem>
+              <SelectItem value="colleague">Colleague</SelectItem>
+              <SelectItem value="neighbor">Neighbor</SelectItem>
+              <SelectItem value="other">Other</SelectItem>
             </SelectContent>
           </Select>
         </div>
         
-        <div className="flex items-center justify-between">
-          <Label htmlFor="isFavorite" className="cursor-pointer">Mark as favorite</Label>
-          <Switch 
-            id="isFavorite" 
+        {!isEmergencyContact && (
+          <div className="space-y-2">
+            <Label className="text-right">Contact Type</Label>
+            <RadioGroup
+              value={contactType}
+              onValueChange={setContactType}
+              className="flex space-x-4"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="personal" id="personal" />
+                <Label htmlFor="personal">Personal</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="emergency" id="emergency" />
+                <Label htmlFor="emergency">Emergency</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="service" id="service" />
+                <Label htmlFor="service">Service</Label>
+              </div>
+            </RadioGroup>
+          </div>
+        )}
+        
+        <div className="flex items-center space-x-2 pt-2">
+          <Switch
+            id="favorite"
             checked={isFavorite}
             onCheckedChange={setIsFavorite}
           />
+          <Label htmlFor="favorite">
+            {isEmergencyContact ? "Priority Contact" : "Add to Favorites"}
+          </Label>
         </div>
         
         <DialogFooter>
@@ -138,8 +204,11 @@ const AddContactForm = ({ onClose, onAddContact }: AddContactFormProps) => {
           >
             Cancel
           </Button>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Adding..." : "Add Contact"}
+          <Button 
+            type="submit"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Saving..." : "Save Contact"}
           </Button>
         </DialogFooter>
       </form>

@@ -1,16 +1,17 @@
 
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, AlertTriangle, Camera, MapPin, AlertCircle } from "lucide-react";
+import { ArrowLeft, AlertTriangle, Camera, MapPin, AlertCircle, Trash2, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import LocationMap from "@/components/common/LocationMap";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useCreateReport } from "@/services/reportsService";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const ReportIncident = () => {
   const navigate = useNavigate();
@@ -24,6 +25,9 @@ const ReportIncident = () => {
   const [description, setDescription] = useState("");
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
+  const [photos, setPhotos] = useState<File[]>([]);
+  const [photoURLs, setPhotoURLs] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,6 +45,38 @@ const ReportIncident = () => {
     setIsSubmitting(true);
     
     try {
+      // Upload images if any
+      let uploadedPhotoPaths: string[] = [];
+      
+      if (photos.length > 0) {
+        // Create progress toast
+        toast("Uploading images...", {
+          duration: 10000,
+          id: "upload-progress"
+        });
+        
+        for (const photo of photos) {
+          const fileName = `${user.id}/${Date.now()}-${photo.name}`;
+          const { data, error } = await supabase.storage
+            .from('report-photos')
+            .upload(fileName, photo);
+            
+          if (error) {
+            console.error("Error uploading image:", error);
+            throw new Error(`Failed to upload image: ${error.message}`);
+          }
+          
+          if (data) {
+            uploadedPhotoPaths.push(data.path);
+          }
+        }
+        
+        // Dismiss progress toast
+        toast.dismiss("upload-progress");
+        toast.success("Images uploaded successfully");
+      }
+      
+      // Create report
       await createReportMutation.mutateAsync({
         title,
         description,
@@ -48,12 +84,28 @@ const ReportIncident = () => {
         location,
         latitude: latitude || undefined,
         longitude: longitude || undefined,
-        is_public: true
+        is_public: true,
+        photos: uploadedPhotoPaths.length > 0 ? uploadedPhotoPaths : undefined
       });
+      
+      // Also create an alert based on the report
+      if (latitude && longitude) {
+        await supabase.from('alerts').insert({
+          title,
+          description,
+          alert_type: incidentType,
+          latitude,
+          longitude,
+          radius: 5000, // 5km radius
+          severity: 'medium',
+          created_by: user.id,
+        });
+      }
       
       toast.success("Report submitted successfully", {
         description: "Thank you for your report. Authorities have been notified."
       });
+      
       navigate("/app");
     } catch (error) {
       toast.error("Failed to submit report", {
@@ -69,6 +121,18 @@ const ReportIncident = () => {
         (position) => {
           setLatitude(position.coords.latitude);
           setLongitude(position.coords.longitude);
+          
+          // Try to get address from coordinates
+          fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${position.coords.latitude},${position.coords.longitude}&key=AIzaSyDp9ZnLPvebOjH8MYt8f0zpqYK4mRSlAts`)
+            .then(response => response.json())
+            .then(data => {
+              if (data.results && data.results[0]) {
+                setLocation(data.results[0].formatted_address);
+              }
+            })
+            .catch(error => {
+              console.error("Error getting address:", error);
+            });
         },
         (error) => {
           console.error("Error getting location:", error);
@@ -83,11 +147,60 @@ const ReportIncident = () => {
   };
   
   // Get current location on component mount if using current location
-  useState(() => {
+  useEffect(() => {
     if (useCurrentLocation) {
       getCurrentLocation();
     }
-  });
+  }, [useCurrentLocation]);
+  
+  const handleLocationSelect = (pos: { lat: number; lng: number }) => {
+    setLatitude(pos.lat);
+    setLongitude(pos.lng);
+    
+    // Try to get address from coordinates
+    fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${pos.lat},${pos.lng}&key=AIzaSyDp9ZnLPvebOjH8MYt8f0zpqYK4mRSlAts`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.results && data.results[0]) {
+          setLocation(data.results[0].formatted_address);
+        }
+      })
+      .catch(error => {
+        console.error("Error getting address:", error);
+      });
+  };
+  
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const selectedFiles = Array.from(e.target.files);
+      
+      // Check if adding these files would exceed the limit
+      if (photos.length + selectedFiles.length > 3) {
+        toast.error("You can only upload up to 3 photos");
+        return;
+      }
+      
+      setPhotos(prev => [...prev, ...selectedFiles]);
+      
+      // Generate URLs for preview
+      const newURLs = selectedFiles.map(file => URL.createObjectURL(file));
+      setPhotoURLs(prev => [...prev, ...newURLs]);
+    }
+  };
+  
+  const handleRemovePhoto = (index: number) => {
+    // Revoke the URL to avoid memory leaks
+    URL.revokeObjectURL(photoURLs[index]);
+    
+    setPhotos(prev => prev.filter((_, i) => i !== index));
+    setPhotoURLs(prev => prev.filter((_, i) => i !== index));
+  };
+  
+  const handleCapturePhoto = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
   
   return (
     <div className="flex flex-col h-full">
@@ -192,11 +305,16 @@ const ReportIncident = () => {
               </div>
             </div>
             
-            {useCurrentLocation ? (
-              <div className="rounded-md border overflow-hidden">
-                <LocationMap location="Current Location" />
-              </div>
-            ) : (
+            <div className="rounded-md border overflow-hidden">
+              <LocationMap 
+                location={location || "Current Location"} 
+                latitude={latitude || undefined}
+                longitude={longitude || undefined}
+                onLocationSelect={!useCurrentLocation ? handleLocationSelect : undefined}
+              />
+            </div>
+            
+            {!useCurrentLocation && (
               <div className="space-y-2">
                 <Input 
                   placeholder="Enter address or description of location" 
@@ -209,13 +327,42 @@ const ReportIncident = () => {
           </div>
           
           <div className="space-y-2">
-            <Label>Add Photos</Label>
+            <Label>Add Photos (max 3)</Label>
             <div className="grid grid-cols-3 gap-2">
-              <div className="aspect-square border-2 border-dashed rounded-md flex flex-col items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors">
-                <Camera className="h-6 w-6 text-muted-foreground mb-1" />
-                <span className="text-xs text-muted-foreground">Add Photo</span>
-                <input type="file" className="hidden" accept="image/*" />
-              </div>
+              {photoURLs.map((url, index) => (
+                <div key={index} className="relative aspect-square border rounded-md overflow-hidden">
+                  <img 
+                    src={url} 
+                    alt={`Upload ${index + 1}`} 
+                    className="w-full h-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleRemovePhoto(index)}
+                    className="absolute top-1 right-1 p-1 bg-black/50 rounded-full text-white"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+              
+              {photos.length < 3 && (
+                <div 
+                  className="aspect-square border-2 border-dashed rounded-md flex flex-col items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors"
+                  onClick={handleCapturePhoto}
+                >
+                  <Camera className="h-6 w-6 text-muted-foreground mb-1" />
+                  <span className="text-xs text-muted-foreground">Add Photo</span>
+                  <input 
+                    ref={fileInputRef}
+                    type="file" 
+                    className="hidden" 
+                    accept="image/*" 
+                    onChange={handlePhotoChange}
+                    multiple={photos.length < 2}
+                  />
+                </div>
+              )}
             </div>
           </div>
           
