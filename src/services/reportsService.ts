@@ -22,8 +22,9 @@ export const useGetReports = () => {
   return useQuery({
     queryKey: ['reports'],
     queryFn: async () => {
+      // We need to use "as any" here because the Supabase types don't include the reports table yet
       const { data, error } = await supabase
-        .from('reports')
+        .from('reports' as any)
         .select('*')
         .order('created_at', { ascending: false });
       
@@ -44,8 +45,9 @@ export const useGetUserReports = () => {
     queryFn: async () => {
       if (!user) return [];
       
+      // We need to use "as any" here because the Supabase types don't include the reports table yet
       const { data, error } = await supabase
-        .from('reports')
+        .from('reports' as any)
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
@@ -73,8 +75,9 @@ export const useCreateReport = () => {
         user_id: user.id,
       };
       
+      // We need to use "as any" here because the Supabase types don't include the reports table yet
       const { data, error } = await supabase
-        .from('reports')
+        .from('reports' as any)
         .insert(newReport as any)
         .select()
         .single();
@@ -83,7 +86,7 @@ export const useCreateReport = () => {
         throw new Error(error.message);
       }
       
-      return data as Report;
+      return data as unknown as Report;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({

@@ -61,7 +61,7 @@ export const useGetAlerts = () => {
       
       // Add typecasting for reports table
       const { data: reportsData, error: reportsError } = await supabase
-        .from('reports')
+        .from('reports' as any)
         .select('*')
         .eq('is_public', true)
         .order('created_at', { ascending: false }) as unknown as { 
@@ -127,7 +127,7 @@ export const useGetRecentAlerts = (limit = 5) => {
       
       // Add typecasting for reports table
       const { data: reportsData, error: reportsError } = await supabase
-        .from('reports')
+        .from('reports' as any)
         .select('*')
         .eq('is_public', true)
         .order('created_at', { ascending: false })
