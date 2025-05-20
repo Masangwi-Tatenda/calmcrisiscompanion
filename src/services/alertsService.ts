@@ -59,19 +59,22 @@ export const useGetAlerts = () => {
         throw new Error(alertsError.message);
       }
       
-      // Get user reports that should be shown as alerts
+      // Add typecasting for reports table
       const { data: reportsData, error: reportsError } = await supabase
         .from('reports')
         .select('*')
         .eq('is_public', true)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false }) as { 
+          data: ReportFromDB[] | null, 
+          error: Error | null 
+        };
       
       if (reportsError) {
         throw new Error(reportsError.message);
       }
       
       // Map the alerts from database to our Alert interface
-      const systemAlerts = (alertsData || []).map(alert => ({
+      const systemAlerts = (alertsData || []).map((alert: AlertFromDB) => ({
         id: alert.id,
         type: alert.alert_type || 'other',
         title: alert.title,
@@ -84,7 +87,7 @@ export const useGetAlerts = () => {
       }));
       
       // Map the reports to look like alerts
-      const reportAlerts = (reportsData || []).map(report => ({
+      const reportAlerts = (reportsData || []).map((report: ReportFromDB) => ({
         id: report.id,
         type: report.category || 'other',
         title: report.title,
@@ -122,20 +125,23 @@ export const useGetRecentAlerts = (limit = 5) => {
         throw new Error(alertsError.message);
       }
       
-      // Get user reports that should be shown as alerts
+      // Add typecasting for reports table
       const { data: reportsData, error: reportsError } = await supabase
         .from('reports')
         .select('*')
         .eq('is_public', true)
         .order('created_at', { ascending: false })
-        .limit(Math.ceil(limit / 2));
+        .limit(Math.ceil(limit / 2)) as {
+          data: ReportFromDB[] | null,
+          error: Error | null
+        };
       
       if (reportsError) {
         throw new Error(reportsError.message);
       }
       
       // Map the alerts from database to our Alert interface
-      const systemAlerts = (alertsData || []).map(alert => ({
+      const systemAlerts = (alertsData || []).map((alert: AlertFromDB) => ({
         id: alert.id,
         type: alert.alert_type || 'other',
         title: alert.title,
@@ -148,7 +154,7 @@ export const useGetRecentAlerts = (limit = 5) => {
       }));
       
       // Map the reports to look like alerts
-      const reportAlerts = (reportsData || []).map(report => ({
+      const reportAlerts = (reportsData || []).map((report: ReportFromDB) => ({
         id: report.id,
         type: report.category || 'other',
         title: report.title,

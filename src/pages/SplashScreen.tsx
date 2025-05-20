@@ -2,17 +2,21 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ShieldAlert } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const SplashScreen = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const timer = setTimeout(() => {
+    const timer = setTimeout(async () => {
       // Check if user has seen onboarding
       const hasSeenOnboarding = localStorage.getItem("hasSeenOnboarding") === "true";
+      
       if (hasSeenOnboarding) {
-        // Check if user is authenticated
-        const isAuthenticated = localStorage.getItem("isAuthenticated") === "true";
+        // Check if user is authenticated using Supabase
+        const { data } = await supabase.auth.getSession();
+        const isAuthenticated = !!data.session;
+        
         navigate(isAuthenticated ? "/app" : "/signin");
       } else {
         navigate("/onboarding");
