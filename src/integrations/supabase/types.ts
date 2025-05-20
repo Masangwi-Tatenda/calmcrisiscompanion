@@ -111,6 +111,36 @@ export type Database = {
         }
         Relationships: []
       }
+      messages: {
+        Row: {
+          chat_room_id: string | null
+          created_at: string
+          id: string
+          is_group_message: boolean
+          message_text: string
+          recipient_id: string | null
+          sender_id: string
+        }
+        Insert: {
+          chat_room_id?: string | null
+          created_at?: string
+          id?: string
+          is_group_message?: boolean
+          message_text: string
+          recipient_id?: string | null
+          sender_id: string
+        }
+        Update: {
+          chat_room_id?: string | null
+          created_at?: string
+          id?: string
+          is_group_message?: boolean
+          message_text?: string
+          recipient_id?: string | null
+          sender_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           address: string | null
@@ -162,6 +192,51 @@ export type Database = {
           state?: string | null
           updated_at?: string
           zip_code?: string | null
+        }
+        Relationships: []
+      }
+      reports: {
+        Row: {
+          category: string
+          created_at: string
+          description: string
+          id: string
+          is_public: boolean
+          latitude: number | null
+          location: string
+          longitude: number | null
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description: string
+          id?: string
+          is_public?: boolean
+          latitude?: number | null
+          location: string
+          longitude?: number | null
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string
+          id?: string
+          is_public?: boolean
+          latitude?: number | null
+          location?: string
+          longitude?: number | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }

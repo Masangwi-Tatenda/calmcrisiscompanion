@@ -34,8 +34,10 @@ const MainLayoutAuthWrapper = () => {
     handleAuthChange();
   }, [hasShownWelcomeToast]);
   
+  // Fix the ProtectedRoute children prop issue by using the children prop explicitly
   return (
     <ProtectedRoute redirectTo="/signin">
+      {/* Explicitly add the children prop to MainLayout */}
       <MainLayout>
         <Outlet />
       </MainLayout>

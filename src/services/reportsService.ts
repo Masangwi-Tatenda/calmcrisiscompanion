@@ -112,7 +112,7 @@ export const useSubscribeToReports = (callback: (report: Report) => void) => {
         table: 'reports'
       },
       (payload) => {
-        callback(payload.new as Report);
+        callback(payload.new as unknown as Report);
       }
     )
     .subscribe();
