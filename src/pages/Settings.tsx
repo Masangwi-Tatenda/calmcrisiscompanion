@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Moon, Sun, Globe, Settings as SettingsIcon } from "lucide-react";
@@ -34,8 +33,7 @@ const Settings = () => {
 
   const handleThemeChange = (newTheme: "light" | "dark" | "system") => {
     setTheme(newTheme);
-    toast({
-      title: "Theme updated",
+    toast("Theme updated", {
       description: `App theme changed to ${newTheme} mode`
     });
   };
@@ -47,8 +45,7 @@ const Settings = () => {
     // Save to localStorage
     localStorage.setItem("appSettings", JSON.stringify(newSettings));
     
-    toast({
-      title: "Settings updated",
+    toast("Settings updated", {
       description: `${key} setting has been updated`
     });
   };
