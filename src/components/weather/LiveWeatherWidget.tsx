@@ -1,6 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { Cloud, CloudRain, CloudLightning, Sun, Thermometer, Wind, Droplets } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface WeatherData {
   temp: number;
@@ -10,6 +11,11 @@ interface WeatherData {
   description: string;
   icon: React.ElementType;
 }
+
+const CHINHOYI_COORDS = {
+  latitude: -17.3667,
+  longitude: 30.2
+};
 
 const LiveWeatherWidget = () => {
   const [weather, setWeather] = useState<WeatherData | null>(null);
@@ -28,42 +34,87 @@ const LiveWeatherWidget = () => {
     }
   };
 
-  const fetchWeather = async () => {
-    // In a real app, this would be an API call to a weather service API
-    // For this demo, we'll simulate weather data that would be fetched from a weather API
+  const fetchChinhoiWeather = async () => {
     try {
-      // Simulate API fetch with different weather conditions
+      // Try to get cached weather data first
+      const { data: cachedData, error: cacheError } = await supabase
+        .from('weather_data')
+        .select()
+        .eq('latitude', CHINHOYI_COORDS.latitude)
+        .eq('longitude', CHINHOYI_COORDS.longitude)
+        .order('created_at', { ascending: false })
+        .limit(1);
+      
+      // Check if we have valid cached data less than 30 minutes old
+      const now = new Date();
+      const thirtyMinutesAgo = new Date(now.getTime() - 30 * 60 * 1000);
+      
+      if (cachedData?.[0] && new Date(cachedData[0].created_at) > thirtyMinutesAgo) {
+        console.log("Using cached weather data");
+        const weatherData = cachedData[0].data as any;
+        setWeather({
+          temp: weatherData.temp,
+          condition: weatherData.condition,
+          humidity: weatherData.humidity,
+          windSpeed: weatherData.windSpeed,
+          description: weatherData.description,
+          icon: getWeatherIcon(weatherData.condition)
+        });
+        setIsLoading(false);
+        return;
+      }
+      
+      // For demo purposes, generate simulated weather data for Chinhoyi
+      console.log("Generating new weather data for Chinhoyi");
       const conditions = [
         "Partly Cloudy", 
         "Light Rain", 
         "Thunderstorms", 
         "Clear Skies",
-        "Cloudy",
-        "Heavy Rain"
+        "Cloudy"
       ];
       
       const randomCondition = conditions[Math.floor(Math.random() * conditions.length)];
-      const randomTemp = Math.floor(Math.random() * 25) + 60; // 60-85°F
+      // Chinhoyi temperature in Celsius (convert to Fahrenheit for display)
+      const randomTempCelsius = Math.floor(Math.random() * 15) + 20; // 20-35°C
+      const randomTempFahrenheit = Math.round((randomTempCelsius * 9/5) + 32);
       const randomHumidity = Math.floor(Math.random() * 50) + 30; // 30-80%
       const randomWind = Math.floor(Math.random() * 15) + 1; // 1-15 mph
       
       let description = "";
       if (randomCondition === "Partly Cloudy") {
-        description = "Partly cloudy with a chance of rain later";
+        description = "Partly cloudy conditions in Chinhoyi";
       } else if (randomCondition === "Light Rain") {
-        description = "Light rain showers, bring an umbrella";
+        description = "Light rain showers in Chinhoyi, carry an umbrella";
       } else if (randomCondition === "Thunderstorms") {
-        description = "Thunderstorms expected, stay indoors if possible";
+        description = "Thunderstorms in Chinhoyi area, stay indoors if possible";
       } else if (randomCondition === "Clear Skies") {
-        description = "Clear skies and pleasant conditions";
-      } else if (randomCondition === "Cloudy") {
-        description = "Overcast with clouds, no precipitation expected";
+        description = "Clear skies and pleasant conditions in Chinhoyi";
       } else {
-        description = "Heavy rain with possible flooding in low areas";
+        description = "Overcast with clouds in Chinhoyi, no rain expected";
       }
+
+      const weatherData = {
+        temp: randomTempFahrenheit,
+        tempCelsius: randomTempCelsius,
+        condition: randomCondition,
+        humidity: randomHumidity,
+        windSpeed: randomWind,
+        description: description,
+        location: "Chinhoyi, Zimbabwe"
+      };
+      
+      // Store in weather_data table
+      const expires = new Date(now.getTime() + 60 * 60 * 1000); // 1 hour expiry
+      await supabase.from('weather_data').insert({
+        latitude: CHINHOYI_COORDS.latitude,
+        longitude: CHINHOYI_COORDS.longitude,
+        data: weatherData,
+        expires_at: expires.toISOString()
+      });
       
       setWeather({
-        temp: randomTemp,
+        temp: randomTempFahrenheit,
         condition: randomCondition,
         humidity: randomHumidity,
         windSpeed: randomWind,
@@ -80,12 +131,11 @@ const LiveWeatherWidget = () => {
 
   useEffect(() => {
     // Initial fetch
-    fetchWeather();
+    fetchChinhoiWeather();
     
-    // Set up interval for less frequent updates (every 30 minutes instead of every minute)
-    // In a real app, this would be aligned with the weather API's update frequency
+    // Set up interval for updates every 30 minutes
     const interval = setInterval(() => {
-      fetchWeather();
+      fetchChinhoiWeather();
     }, 1800000); // 30 minutes
     
     // Clean up interval
@@ -117,7 +167,8 @@ const LiveWeatherWidget = () => {
               <p className="text-sm opacity-90">{weather.condition}</p>
             </div>
           </div>
-          <p className="text-sm mt-2 opacity-90">{weather.description}</p>
+          <p className="text-sm mt-1 opacity-90">{weather.description}</p>
+          <p className="text-xs mt-1 opacity-75">Chinhoyi, Zimbabwe</p>
         </div>
         <div className="space-y-2">
           <div className="flex items-center text-xs">

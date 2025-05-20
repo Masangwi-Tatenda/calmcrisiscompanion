@@ -15,11 +15,12 @@ const MainLayoutAuthWrapper = () => {
       const { data } = await supabase.auth.getSession();
       const sessionKey = 'auth-session-welcomed';
       
-      // Get session ID and last welcomed session from localStorage
-      const sessionId = data.session?.user?.id; // Use user.id instead of session.id
+      // Get session ID and check if it's a new login
+      const sessionId = data.session?.user?.id;
       const lastWelcomedSession = localStorage.getItem(sessionKey);
+      const isNewLogin = sessionId && sessionId !== lastWelcomedSession;
       
-      if (sessionId && sessionId !== lastWelcomedSession && !hasShownWelcomeToast) {
+      if (isNewLogin && !hasShownWelcomeToast) {
         // Store that we've welcomed this session
         localStorage.setItem(sessionKey, sessionId);
         setHasShownWelcomeToast(true);
@@ -35,7 +36,7 @@ const MainLayoutAuthWrapper = () => {
   }, [hasShownWelcomeToast]);
   
   return (
-    <ProtectedRoute redirectTo="/signin">
+    <ProtectedRoute>
       <MainLayout>
         <Outlet />
       </MainLayout>
