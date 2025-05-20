@@ -1,34 +1,24 @@
 
-import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import BottomNavigation from "../navigation/BottomNavigation";
 import SOSButton from "../common/SOSButton";
-import { useEffect } from "react";
+import { ReactNode } from "react";
 import { ScrollProvider } from "@/contexts/ScrollContext";
 
-const MainLayout = () => {
+interface MainLayoutProps {
+  children: ReactNode;
+}
+
+const MainLayout = ({ children }: MainLayoutProps) => {
   const location = useLocation();
-  const navigate = useNavigate();
   const isChatRoute = location.pathname.includes('/app/chat');
   const isMapRoute = location.pathname.includes('/app/map');
-
-  // Simulate authentication check
-  useEffect(() => {
-    // For demo purposes - check if user is coming from auth pages
-    const isAuthenticated = localStorage.getItem("isAuthenticated") === "true";
-    if (!isAuthenticated && 
-        !location.pathname.includes('/signin') && 
-        !location.pathname.includes('/signup') && 
-        !location.pathname.includes('/onboarding') && 
-        !location.pathname.includes('/')) {
-      navigate("/signin");
-    }
-  }, [navigate, location]);
 
   return (
     <ScrollProvider>
       <div className="flex flex-col min-h-screen bg-background">
         <main className="flex-1 overflow-auto pb-20">
-          <Outlet />
+          {children}
         </main>
         <SOSButton hidden={isChatRoute || isMapRoute} />
         <BottomNavigation />
