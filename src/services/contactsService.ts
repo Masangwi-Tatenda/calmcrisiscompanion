@@ -1,11 +1,13 @@
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
+import { chinhoyiEmergencyContacts } from "./chinhoyiContactsService";
 
 export interface Contact {
   id: string;
   name: string;
   phone: string;
+  email?: string;
   relationship?: string;
   type: string;
   is_favorite: boolean;
@@ -38,18 +40,11 @@ export const useGetContacts = () => {
       }
       
       // Then, get default emergency contacts (null user_id)
-      const { data: defaultContacts, error: defaultError } = await supabase
-        .from('contacts')
-        .select('*')
-        .is('user_id', null)
-        .order('is_favorite', { ascending: false });
-      
-      if (defaultError) {
-        throw new Error(defaultError.message);
-      }
+      // We're going to use our Chinhoyi emergency contacts instead of fetching from the database
+      const defaultContacts = chinhoyiEmergencyContacts;
       
       // Combine both sets of contacts
-      const allContacts = [...personalContacts, ...(defaultContacts as Contact[])];
+      const allContacts = [...personalContacts, ...defaultContacts];
       
       return allContacts;
     },

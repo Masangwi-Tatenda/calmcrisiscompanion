@@ -1,10 +1,13 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bell, MapPin, FileText, Phone, MessageCircle, Shield, AlertTriangle, Cloud, CloudRain, CloudLightning, Info } from "lucide-react";
+import { Bell, MapPin, FileText, Phone, MessageCircle, Shield, AlertTriangle, Cloud, CloudRain, CloudLightning, Info, Map } from "lucide-react";
 import QuickAction from "@/components/common/QuickAction";
 import AlertCard from "@/components/common/AlertCard";
 import { toast } from "@/components/ui/use-toast";
 import LiveWeatherWidget from "@/components/weather/LiveWeatherWidget";
+import ChinhoiMap from "@/components/common/ChinhoiMap";
+import SOSButton from "@/components/common/SOSButton";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -59,9 +62,6 @@ const Home = () => {
     };
   }, []);
 
-  // Mock user location for sharing
-  const userLocation = "37.7749,-122.4194"; // San Francisco coordinates
-
   const handleSafetyCheck = () => {
     setMarkSafeOpen(true);
   };
@@ -76,9 +76,6 @@ const Home = () => {
       description: "Your emergency contacts have been notified that you are safe",
       duration: 3000,
     });
-    
-    // In a real app, this would make an API call to notify emergency contacts
-    console.log("User marked as safe, notifying emergency contacts");
   }
 
   const quickActions = [
@@ -91,8 +88,8 @@ const Home = () => {
     { icon: MapPin, label: "Nearby", color: "text-crisis-blue", onClick: () => navigate("/app/nearby") },
     { icon: AlertTriangle, label: "Report", color: "text-crisis-red", onClick: () => navigate("/app/report") },
     { icon: FileText, label: "Guides", color: "text-primary", onClick: () => navigate("/app/resources") },
-    { icon: Phone, label: "Contacts", color: "text-crisis-purple", onClick: () => navigate("/app/contacts") },
-    { icon: MessageCircle, label: "Chat", color: "text-crisis-darkBlue", onClick: () => navigate("/app/chat") },
+    { icon: Map, label: "Map", color: "text-crisis-darkBlue", onClick: () => navigate("/app/map") },
+    { icon: MessageCircle, label: "Chat", color: "text-crisis-purple", onClick: () => navigate("/app/chat") },
   ];
 
   return (
@@ -100,7 +97,7 @@ const Home = () => {
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-bold">Hello, {userName}</h1>
-          <p className="text-sm text-muted-foreground">How can we help you today?</p>
+          <p className="text-sm text-muted-foreground">Crisis Connect - Chinhoyi, Zimbabwe</p>
         </div>
         <button 
           className="p-2 bg-secondary rounded-full" 
@@ -177,10 +174,23 @@ const Home = () => {
           </div>
         ) : (
           <div className="text-center py-8">
-            <p className="text-muted-foreground">No recent alerts</p>
+            <p className="text-muted-foreground">No recent alerts in Chinhoyi, Zimbabwe</p>
           </div>
         )}
       </div>
+
+      {/* Chinhoyi Map Section */}
+      <div className="mb-8">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="font-semibold">Chinhoyi Map</h2>
+        </div>
+        <div className="rounded-lg overflow-hidden border border-border">
+          <ChinhoiMap className="w-full" />
+        </div>
+      </div>
+      
+      {/* SOS Button */}
+      <SOSButton />
       
       <Dialog open={markSafeOpen} onOpenChange={setMarkSafeOpen}>
         <DialogContent>
