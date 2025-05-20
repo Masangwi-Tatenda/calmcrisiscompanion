@@ -53,7 +53,7 @@ const WeatherWidget = () => {
           <div className="flex items-center">
             <weather.icon className="h-10 w-10 mr-3" />
             <div>
-              <h2 className="font-bold text-2xl">{weather.temp}°F</h2>
+              <h2 className="font-bold text-2xl">{weather.temp}°C</h2>
               <p className="text-sm opacity-90">{weather.condition}</p>
             </div>
           </div>
@@ -62,7 +62,7 @@ const WeatherWidget = () => {
         <div className="space-y-2">
           <div className="flex items-center text-xs">
             <Wind className="h-3 w-3 mr-1" />
-            <span>Wind: {weather.windSpeed} mph</span>
+            <span>Wind: {weather.windSpeed} km/h</span>
           </div>
           <div className="flex items-center text-xs">
             <Droplets className="h-3 w-3 mr-1" />
