@@ -1,84 +1,56 @@
-
 import { useState, useEffect } from "react";
-import { ArrowLeft, Building, Heart, MapPin, Navigation, Phone, Search, Shield, Flame } from "lucide-react";
+import { ArrowLeft, Building, Heart, MapPin, Navigation, Phone, Search, Shield } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import LocationMap from "@/components/common/LocationMap";
 import { toast } from "sonner";
 
-// Chinhoyi, Zimbabwe locations
-const chinhoyiLocations = [
+// Mock nearby locations
+const mockLocations = [
   {
     id: 1,
-    name: "Chinhoyi Provincial Hospital",
+    name: "City Hospital",
     category: "hospital",
-    distance: "1.2 km",
-    address: "Magamba Way, Chinhoyi, Zimbabwe",
-    phone: "+263 67 22512",
+    distance: "0.8 miles",
+    address: "123 Main Street, Downtown",
+    phone: "(555) 123-4567",
     icon: Heart
   },
   {
     id: 2,
-    name: "Chinhoyi Central Police Station",
+    name: "Police Station",
     category: "police",
-    distance: "0.8 km",
-    address: "Central Business District, Chinhoyi, Zimbabwe",
-    phone: "+263 67 23333",
+    distance: "1.2 miles",
+    address: "456 Oak Avenue, Westside",
+    phone: "(555) 234-5678",
     icon: Shield
   },
   {
     id: 3,
-    name: "Chinhoyi Community Centre",
+    name: "Community Center",
     category: "shelter",
-    distance: "1.5 km",
-    address: "Muzimba Road, Chinhoyi, Zimbabwe",
-    phone: "+263 67 22000",
+    distance: "0.5 miles",
+    address: "789 Pine Street, Eastside",
+    phone: "(555) 345-6789",
     icon: Building
   },
   {
     id: 4,
-    name: "St. Mary's Clinic",
+    name: "St. Mary's Hospital",
     category: "hospital",
-    distance: "2.3 km",
-    address: "Hunyani Street, Chinhoyi, Zimbabwe",
-    phone: "+263 67 22588",
+    distance: "1.5 miles",
+    address: "135 Care Way, Riverside",
+    phone: "(555) 456-7890",
     icon: Heart
   },
   {
     id: 5,
-    name: "Chinhoyi Fire Station",
+    name: "City Fire Station",
     category: "fire",
-    distance: "1.1 km",
-    address: "Fire Station Road, Chinhoyi, Zimbabwe",
-    phone: "+263 67 22911",
-    icon: Flame
-  },
-  {
-    id: 6,
-    name: "Chinhoyi University Hospital",
-    category: "hospital",
-    distance: "3.5 km",
-    address: "University Road, Chinhoyi, Zimbabwe",
-    phone: "+263 67 22400",
-    icon: Heart
-  },
-  {
-    id: 7,
-    name: "Orange Grove Assembly Point",
-    category: "shelter",
-    distance: "2.2 km",
-    address: "Orange Grove, Chinhoyi, Zimbabwe",
-    phone: "+263 67 22111",
-    icon: Building
-  },
-  {
-    id: 8,
-    name: "Chemagamba Emergency Shelter",
-    category: "shelter",
-    distance: "4.1 km",
-    address: "Chemagamba, Chinhoyi, Zimbabwe",
-    phone: "+263 67 23456",
+    distance: "0.7 miles",
+    address: "246 Elm Street, Downtown",
+    phone: "(555) 567-8901",
     icon: Building
   }
 ];
@@ -86,7 +58,7 @@ const chinhoyiLocations = [
 const Nearby = () => {
   const [activeTab, setActiveTab] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [filteredLocations, setFilteredLocations] = useState(chinhoyiLocations);
+  const [filteredLocations, setFilteredLocations] = useState(mockLocations);
   const [selectedLocation, setSelectedLocation] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -100,7 +72,7 @@ const Nearby = () => {
   }, []);
 
   useEffect(() => {
-    let result = [...chinhoyiLocations];
+    let result = [...mockLocations];
     
     // Apply category filter
     if (activeTab !== "all") {
@@ -141,7 +113,7 @@ const Nearby = () => {
         <div className="flex justify-between items-center mb-4">
           <div className="flex items-center">
             <MapPin className="h-5 w-5 mr-2" />
-            <h1 className="text-xl font-bold">Nearby Locations in Chinhoyi</h1>
+            <h1 className="text-xl font-bold">Nearby Locations</h1>
           </div>
         </div>
         
@@ -258,7 +230,7 @@ const Nearby = () => {
 
         <div className="hidden md:block h-full min-h-[400px] rounded-lg overflow-hidden border border-border">
           <LocationMap
-            location={selectedLocation ? selectedLocation.address : "Chinhoyi, Zimbabwe"}
+            location={selectedLocation ? selectedLocation.address : "Current Location"}
             zoom={15}
             showDirections={true}
             className="w-full h-full"

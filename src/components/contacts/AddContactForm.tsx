@@ -1,157 +1,116 @@
 
 import { useState } from "react";
-import { DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { toast } from "sonner";
-import { useCreateContact, Contact } from "@/services/contactsService";
+import { toast } from "@/components/ui/use-toast";
+import { useCreateContact } from "@/services/contactsService";
 
 interface AddContactFormProps {
   onClose: () => void;
-  onAddContact: (contact: Contact) => void;
+  onAddContact: (contact: any) => void;
 }
 
 const AddContactForm = ({ onClose, onAddContact }: AddContactFormProps) => {
-  const createContactMutation = useCreateContact();
-  
-  const [formValues, setFormValues] = useState({
-    name: "",
-    phone: "",
-    email: "",
-    relationship: "",
-    type: "personal",
-    is_favorite: false
-  });
-  
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [relationship, setRelationship] = useState("");
+  const [type, setType] = useState("personal");
+  const [isFavorite, setIsFavorite] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormValues(prev => ({ ...prev, [name]: value }));
-  };
-  
-  const handleSelectChange = (name: string, value: string) => {
-    setFormValues(prev => ({ ...prev, [name]: value }));
-  };
-  
-  const handleSwitchChange = (name: string, checked: boolean) => {
-    setFormValues(prev => ({ ...prev, [name]: checked }));
-  };
-  
+
+  const createContactMutation = useCreateContact();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!formValues.name || !formValues.phone) {
-      toast.error("Please fill in all required fields");
-      return;
-    }
-    
-    // Validate phone number format
-    const phoneRegex = /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/;
-    if (!phoneRegex.test(formValues.phone)) {
-      toast.error("Please enter a valid phone number");
-      return;
-    }
-    
-    // Validate email format if provided
-    if (formValues.email) {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(formValues.email)) {
-        toast.error("Please enter a valid email address");
-        return;
-      }
-    }
-    
-    try {
-      setIsSubmitting(true);
-      
-      const newContact = await createContactMutation.mutateAsync({
-        name: formValues.name,
-        phone: formValues.phone,
-        email: formValues.email,
-        relationship: formValues.relationship || undefined,
-        type: formValues.type,
-        is_favorite: formValues.is_favorite,
+
+    if (!name || !phone) {
+      toast({
+        title: "Required fields missing",
+        description: "Please fill in name and phone number",
+        variant: "destructive",
+        duration: 3000,
       });
-      
-      toast.success("Contact added successfully");
-      onAddContact(newContact);
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const newContact = {
+        name,
+        phone,
+        relationship,
+        type,
+        is_favorite: isFavorite
+      };
+
+      const createdContact = await createContactMutation.mutateAsync(newContact);
+
+      toast({
+        title: "Contact added",
+        description: `${name} has been added to your contacts`,
+        duration: 3000,
+      });
+
+      onAddContact(createdContact);
       onClose();
     } catch (error: any) {
-      console.error("Error adding contact:", error);
-      toast.error("Failed to add contact", {
-        description: error.message || "Please try again later",
+      toast({
+        title: "Failed to add contact",
+        description: error.message || "An error occurred",
+        variant: "destructive",
+        duration: 3000,
       });
     } finally {
       setIsSubmitting(false);
     }
   };
-  
+
   return (
-    <DialogContent>
+    <DialogContent className="sm:max-w-[425px]">
       <DialogHeader>
         <DialogTitle>Add New Contact</DialogTitle>
       </DialogHeader>
-      
-      <form onSubmit={handleSubmit} className="space-y-4 py-2">
+      <form onSubmit={handleSubmit} className="space-y-4 pt-4">
         <div className="space-y-2">
-          <Label htmlFor="name">Name *</Label>
+          <Label htmlFor="name">Name</Label>
           <Input 
             id="name"
-            name="name"
-            value={formValues.name}
-            onChange={handleChange}
-            placeholder="Enter contact name"
-            required
+            placeholder="Enter name" 
+            value={name}
+            onChange={(e) => setName(e.target.value)}
           />
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="phone">Phone Number *</Label>
+          <Label htmlFor="phone">Phone Number</Label>
           <Input 
             id="phone"
-            name="phone"
-            value={formValues.phone}
-            onChange={handleChange}
-            placeholder="e.g. +263 67 123456"
-            required
+            placeholder="Enter phone number" 
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
           />
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
-          <Input 
-            id="email"
-            name="email"
-            type="email"
-            value={formValues.email}
-            onChange={handleChange}
-            placeholder="email@example.com"
-          />
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="relationship">Relationship</Label>
+          <Label htmlFor="relationship">Relationship (optional)</Label>
           <Input 
             id="relationship"
-            name="relationship"
-            value={formValues.relationship}
-            onChange={handleChange}
-            placeholder="e.g. Family, Friend, Colleague"
+            placeholder="Family, Friend, Coworker, etc." 
+            value={relationship}
+            onChange={(e) => setRelationship(e.target.value)}
           />
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="type">Type</Label>
-          <Select 
-            value={formValues.type} 
-            onValueChange={(value) => handleSelectChange("type", value)}
-          >
+          <Label htmlFor="type">Contact Type</Label>
+          <Select value={type} onValueChange={setType}>
             <SelectTrigger>
-              <SelectValue placeholder="Select contact type" />
+              <SelectValue placeholder="Select type" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="personal">Personal</SelectItem>
@@ -162,22 +121,27 @@ const AddContactForm = ({ onClose, onAddContact }: AddContactFormProps) => {
         </div>
         
         <div className="flex items-center justify-between">
-          <Label htmlFor="is_favorite">Mark as favorite</Label>
+          <Label htmlFor="isFavorite" className="cursor-pointer">Mark as favorite</Label>
           <Switch 
-            id="is_favorite"
-            checked={formValues.is_favorite}
-            onCheckedChange={(checked) => handleSwitchChange("is_favorite", checked)}
+            id="isFavorite" 
+            checked={isFavorite}
+            onCheckedChange={setIsFavorite}
           />
         </div>
         
-        <div className="flex justify-end space-x-2 pt-4">
-          <Button type="button" variant="outline" onClick={onClose}>
+        <DialogFooter>
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={onClose}
+            disabled={isSubmitting}
+          >
             Cancel
           </Button>
           <Button type="submit" disabled={isSubmitting}>
             {isSubmitting ? "Adding..." : "Add Contact"}
           </Button>
-        </div>
+        </DialogFooter>
       </form>
     </DialogContent>
   );
