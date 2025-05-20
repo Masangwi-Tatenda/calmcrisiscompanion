@@ -64,7 +64,7 @@ export const useGetAlerts = () => {
         .from('reports')
         .select('*')
         .eq('is_public', true)
-        .order('created_at', { ascending: false }) as { 
+        .order('created_at', { ascending: false }) as unknown as { 
           data: ReportFromDB[] | null, 
           error: Error | null 
         };
@@ -131,7 +131,7 @@ export const useGetRecentAlerts = (limit = 5) => {
         .select('*')
         .eq('is_public', true)
         .order('created_at', { ascending: false })
-        .limit(Math.ceil(limit / 2)) as {
+        .limit(Math.ceil(limit / 2)) as unknown as {
           data: ReportFromDB[] | null,
           error: Error | null
         };

@@ -31,7 +31,7 @@ export const useGetReports = () => {
         throw new Error(error.message);
       }
       
-      return data as Report[];
+      return data as unknown as Report[];
     },
   });
 };
@@ -54,7 +54,7 @@ export const useGetUserReports = () => {
         throw new Error(error.message);
       }
       
-      return data as Report[];
+      return data as unknown as Report[];
     },
     enabled: !!user,
   });
@@ -75,7 +75,7 @@ export const useCreateReport = () => {
       
       const { data, error } = await supabase
         .from('reports')
-        .insert(newReport)
+        .insert(newReport as any)
         .select()
         .single();
       

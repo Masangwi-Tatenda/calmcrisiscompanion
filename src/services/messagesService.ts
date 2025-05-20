@@ -61,7 +61,7 @@ export const useSendMessage = () => {
       
       const { data, error } = await supabase
         .from('messages')
-        .insert(validatedMessage)
+        .insert(validatedMessage as any)
         .select();
       
       if (error) {

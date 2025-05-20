@@ -57,7 +57,7 @@ function App() {
                 <Route path="/signup" element={<SignUp />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 
-                {/* Protected routes - no need for AuthProvider here as it's in MainLayoutAuthWrapper */}
+                {/* Protected routes */}
                 <Route path="/app" element={<MainLayoutAuthWrapper />}>
                   <Route index element={<Home />} />
                   <Route path="alerts" element={<Alerts />} />
@@ -79,10 +79,10 @@ function App() {
                 {/* 404 route */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
+              <Toaster />
+              <Sonner />
             </AuthProvider>
           </Router>
-          <Toaster />
-          <Sonner />
         </TooltipProvider>
       </ThemeProvider>
     </QueryClientProvider>
