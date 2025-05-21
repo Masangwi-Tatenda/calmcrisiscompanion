@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
@@ -69,7 +70,8 @@ const EnhancedProfile = () => {
   const handleSignOut = () => {
     localStorage.removeItem("isAuthenticated");
     localStorage.removeItem("hasSeenOnboarding");
-    toast("Signed out", {
+    toast({
+      title: "Signed out",
       description: "You have been successfully signed out",
     });
     navigate("/signin");
@@ -84,7 +86,8 @@ const EnhancedProfile = () => {
     setNotificationSettings(updated);
     localStorage.setItem("notificationSettings", JSON.stringify(updated));
     
-    toast("Settings Updated", {
+    toast({
+      title: "Settings Updated",
       description: `${key} notifications ${updated[key as keyof typeof updated] ? 'enabled' : 'disabled'}`,
     });
   };
@@ -100,7 +103,8 @@ const EnhancedProfile = () => {
     setUserProfile(updatedProfile);
     localStorage.setItem("userProfile", JSON.stringify(updatedProfile));
     
-    toast("Theme Updated", {
+    toast({
+      title: "Theme Updated",
       description: `App theme changed to ${newTheme} mode`,
     });
   };
@@ -109,7 +113,8 @@ const EnhancedProfile = () => {
     // Save profile to localStorage
     localStorage.setItem("userProfile", JSON.stringify(userProfile));
     
-    toast("Profile Updated", {
+    toast({
+      title: "Profile Updated",
       description: "Your profile information has been updated successfully",
     });
     setEditMode(false);
