@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
@@ -7,13 +6,11 @@ export interface Contact {
   id: string;
   name: string;
   phone: string;
-  email?: string;
   relationship?: string;
   type: string;
   is_favorite: boolean;
   created_at: string;
   user_id?: string;
-  is_emergency_contact?: boolean;
 }
 
 export const useGetContacts = () => {
@@ -176,68 +173,6 @@ export const useDeleteContact = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ['contacts'],
-      });
-    },
-  });
-};
-
-export const useAddEmergencyContact = () => {
-  const queryClient = useQueryClient();
-  const { user } = useAuth();
-  
-  return useMutation({
-    mutationFn: async (contact: { 
-      name: string; 
-      phone: string; 
-      email?: string;
-      relationship?: string;
-    }) => {
-      if (!user) throw new Error("User not authenticated");
-
-      // First add to contacts table
-      const newContact = {
-        name: contact.name,
-        phone: contact.phone,
-        email: contact.email,
-        relationship: contact.relationship,
-        type: "personal",
-        is_favorite: true,
-        is_emergency_contact: true,
-        user_id: user.id,
-      };
-      
-      const { data, error } = await supabase
-        .from('contacts')
-        .insert(newContact)
-        .select()
-        .single();
-      
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      // Then also update the user's profile with this emergency contact
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({
-          emergency_contact_name: contact.name,
-          emergency_contact_phone: contact.phone,
-        })
-        .eq('id', user.id);
-
-      if (profileError) {
-        // Log error but don't fail the operation
-        console.error("Error updating profile emergency contacts:", profileError);
-      }
-      
-      return data as Contact;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ['contacts'],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ['profile'],
       });
     },
   });

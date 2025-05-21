@@ -1,11 +1,18 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ArrowLeft, Building, Heart, MapPin, Navigation, Phone, Search, Shield } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import GoogleMap from "@/components/common/GoogleMap";
+
+// Add type declarations for Google Maps
+declare global {
+  interface Window {
+    google: any;
+    initMap: () => void;
+  }
+}
 
 // Mock emergency locations for Chinhoyi, Zimbabwe
 const emergencyLocations = [
@@ -89,30 +96,92 @@ const Map = () => {
   const [filteredLocations, setFilteredLocations] = useState(emergencyLocations);
   const [selectedLocation, setSelectedLocation] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [userLocation, setUserLocation] = useState<{ lat: number, lng: number } | null>(null);
+  const [mapLoaded, setMapLoaded] = useState(false);
+  const [map, setMap] = useState<any>(null);
+  const [markers, setMarkers] = useState<any[]>([]);
+  const mapRef = useRef<HTMLDivElement>(null);
 
-  // Get user location
+  // Initialize Google Maps
   useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setUserLocation({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          });
-        },
-        (error) => {
-          console.error("Error getting location:", error);
-          toast("Could not access your location", {
-            description: "Please enable location services or enter location manually"
-          });
-        }
-      );
-    }
+    // Define the global callback for the script
+    window.initMap = () => {
+      setMapLoaded(true);
+    };
+    
+    const script = document.createElement('script');
+    // In a real implementation, you'd use an environment variable for the API key
+    script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyDp9ZnLPvebOjH8MYt8f0zpqYK4mRSlAts&libraries=places&callback=initMap`;
+    script.async = true;
+    script.defer = true;
+    document.head.appendChild(script);
+
+    return () => {
+      // Clean up the global callback
+      window.initMap = () => {};
+      // Remove the script tag if component unmounts before loading completes
+      if (document.head.contains(script)) {
+        document.head.removeChild(script);
+      }
+    };
   }, []);
 
-  // Filter locations when tab changes
+  // Initialize map when loaded
   useEffect(() => {
+    if (mapLoaded && !map && mapRef.current) {
+      // Chinhoyi, Zimbabwe coordinates
+      const chinhoiPosition = { lat: -17.3667, lng: 30.2 };
+      
+      const newMap = new window.google.maps.Map(mapRef.current, {
+        center: chinhoiPosition,
+        zoom: 14,
+        streetViewControl: false,
+        mapTypeControl: false
+      });
+      
+      setMap(newMap);
+      
+      // Add emergency locations markers
+      const newMarkers = emergencyLocations.map(location => {
+        const marker = new window.google.maps.Marker({
+          position: location.position,
+          map: newMap,
+          title: location.name,
+          icon: {
+            url: getMarkerIconUrl(location.category),
+            scaledSize: new window.google.maps.Size(32, 32)
+          }
+        });
+        
+        // Add click listener
+        marker.addListener('click', () => {
+          setSelectedLocation(location);
+        });
+        
+        return { marker, location };
+      });
+      
+      setMarkers(newMarkers);
+      
+      // Add alert zones as circles
+      alertZones.forEach(zone => {
+        new window.google.maps.Circle({
+          strokeColor: getAlertColor(zone.severity),
+          strokeOpacity: 0.8,
+          strokeWeight: 2,
+          fillColor: getAlertColor(zone.severity),
+          fillOpacity: 0.35,
+          map: newMap,
+          center: zone.position,
+          radius: zone.radius
+        });
+      });
+    }
+  }, [mapLoaded, map]);
+
+  // Filter markers when tab changes
+  useEffect(() => {
+    if (!map || !markers.length) return;
+    
     let filtered = emergencyLocations;
     
     // Apply category filter
@@ -130,8 +199,14 @@ const Map = () => {
       );
     }
     
+    // Update markers visibility
+    markers.forEach(({ marker, location }) => {
+      const isVisible = filtered.some(item => item.id === location.id);
+      marker.setVisible(isVisible);
+    });
+    
     setFilteredLocations(filtered);
-  }, [activeTab, searchQuery]);
+  }, [activeTab, searchQuery, map, markers]);
 
   // Simulate loading state
   useEffect(() => {
@@ -144,11 +219,17 @@ const Map = () => {
 
   const handleSelectLocation = (location: any) => {
     setSelectedLocation(location);
+    
+    // Find and center map on the selected location
+    if (map && location) {
+      map.panTo(location.position);
+      map.setZoom(15);
+    }
   };
 
   const handleCall = (phone: string) => {
     window.location.href = `tel:${phone.replace(/\D/g, '')}`;
-    toast("Calling " + phone);
+    toast.success(`Calling ${phone}`);
   };
 
   const handleGetDirections = (address: string) => {
@@ -157,20 +238,34 @@ const Map = () => {
     window.open(`https://maps.google.com/?q=${encodeURIComponent(address)}`, '_blank');
   };
   
-  const prepareMarkersForMap = () => {
-    if (selectedLocation) {
-      return [{
-        position: selectedLocation.position,
-        title: selectedLocation.name,
-        info: selectedLocation.address
-      }];
+  // Helper function to get marker icon based on category
+  const getMarkerIconUrl = (category: string) => {
+    switch (category) {
+      case 'hospital':
+        return 'https://maps.google.com/mapfiles/ms/icons/red-dot.png';
+      case 'police':
+        return 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png';
+      case 'fire':
+        return 'https://maps.google.com/mapfiles/ms/icons/orange-dot.png';
+      case 'shelter':
+        return 'https://maps.google.com/mapfiles/ms/icons/green-dot.png';
+      default:
+        return 'https://maps.google.com/mapfiles/ms/icons/yellow-dot.png';
     }
-    
-    return filteredLocations.map(location => ({
-      position: location.position,
-      title: location.name,
-      info: location.address
-    }));
+  };
+  
+  // Helper function to get alert color based on severity
+  const getAlertColor = (severity: string) => {
+    switch (severity) {
+      case 'high':
+        return '#FF0000';
+      case 'moderate':
+        return '#FFA500';
+      case 'low':
+        return '#FFFF00';
+      default:
+        return '#FF8C00';
+    }
   };
 
   return (
@@ -205,17 +300,11 @@ const Map = () => {
       </div>
 
       <div className="flex-1 grid md:grid-cols-2 gap-4 p-4">
-        <div className="h-[400px] md:h-full rounded-lg overflow-hidden border border-border order-2 md:order-1">
-          {isLoading ? (
+        <div id="emergency-map" ref={mapRef} className="h-[400px] md:h-full rounded-lg overflow-hidden border border-border order-2 md:order-1">
+          {!mapLoaded && (
             <div className="h-full flex items-center justify-center bg-muted">
               <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
             </div>
-          ) : (
-            <GoogleMap 
-              height="100%" 
-              markers={prepareMarkersForMap()}
-              center={selectedLocation ? selectedLocation.position : undefined}
-            />
           )}
         </div>
 

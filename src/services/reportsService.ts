@@ -16,13 +16,6 @@ export interface Report {
   updated_at: string;
   status: string;
   is_public: boolean;
-  photos?: string[];
-}
-
-export interface CreateReportInput extends Omit<Report, 'id' | 'user_id' | 'created_at' | 'updated_at' | 'status'> {
-  latitude?: number;
-  longitude?: number;
-  photos?: string[];
 }
 
 export const useGetReports = () => {
@@ -74,7 +67,7 @@ export const useCreateReport = () => {
   const { user } = useAuth();
   
   return useMutation({
-    mutationFn: async (report: CreateReportInput) => {
+    mutationFn: async (report: Omit<Report, 'id' | 'user_id' | 'created_at' | 'updated_at' | 'status'>) => {
       if (!user) throw new Error("User not authenticated");
       
       const newReport = {
